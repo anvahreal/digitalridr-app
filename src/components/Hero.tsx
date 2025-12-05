@@ -27,12 +27,12 @@ export function Hero() {
               unique stays
             </span>
             <br />
-            around the world
+            around lagos
           </h1>
 
           {/* Subtitle */}
           <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground md:text-xl animate-slide-up" style={{ animationDelay: "0.1s" }}>
-            From cozy cabins to beachfront villas, find the perfect place to stay for your next adventure.
+            From the mainlands to the islands, find the perfect place to stay for your comfort.
           </p>
 
           {/* Search Bar */}
