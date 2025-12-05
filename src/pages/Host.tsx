@@ -1,0 +1,241 @@
+import { Link } from "react-router-dom";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { 
+  DollarSign, 
+  Shield, 
+  Users, 
+  Calendar, 
+  BarChart3,
+  Home,
+  ArrowRight,
+  Check
+} from "lucide-react";
+
+const Host = () => {
+  const benefits = [
+    {
+      icon: DollarSign,
+      title: "Earn extra income",
+      description: "Turn your space into a revenue stream. Hosts on Staybnb earn an average of $1,200/month.",
+    },
+    {
+      icon: Shield,
+      title: "Host protection",
+      description: "Get $1M in damage protection and $1M in liability insurance included with every booking.",
+    },
+    {
+      icon: Calendar,
+      title: "Flexible scheduling",
+      description: "You decide when to host. Block dates, set minimum stays, and customize your availability.",
+    },
+    {
+      icon: Users,
+      title: "24/7 support",
+      description: "Our dedicated support team is always available to help you and your guests.",
+    },
+  ];
+
+  const steps = [
+    {
+      number: "1",
+      title: "Create your listing",
+      description: "Share info about your space, including photos, amenities, and your house rules.",
+    },
+    {
+      number: "2",
+      title: "Set your price",
+      description: "You choose your nightly rate. We suggest competitive pricing based on similar listings.",
+    },
+    {
+      number: "3",
+      title: "Publish and earn",
+      description: "Once your listing is live, guests can book instantly or send reservation requests.",
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main>
+        {/* Hero */}
+        <section className="relative overflow-hidden bg-foreground py-20 text-background md:py-32">
+          <div className="absolute inset-0 opacity-20">
+            <img
+              src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920"
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="container relative z-10">
+            <div className="max-w-2xl">
+              <h1 className="text-4xl font-bold md:text-5xl lg:text-6xl">
+                Open your door to hosting
+              </h1>
+              <p className="mt-6 text-xl text-background/80">
+                Join millions of hosts earning extra income by sharing their space with travelers around the world.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Link to="/auth">
+                  <Button size="xl" className="bg-primary hover:bg-coral-hover">
+                    Get started
+                  </Button>
+                </Link>
+                <Button
+                  size="xl"
+                  variant="outline"
+                  className="border-background/30 bg-transparent text-background hover:bg-background/10"
+                >
+                  Learn more
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Earnings Calculator */}
+        <section className="py-16 md:py-24">
+          <div className="container">
+            <div className="mx-auto max-w-4xl text-center">
+              <h2 className="text-3xl font-bold md:text-4xl">
+                See what you could earn
+              </h2>
+              <p className="mt-4 text-muted-foreground">
+                Based on the average nightly rate and booking frequency in your area
+              </p>
+              
+              <div className="mt-12 rounded-2xl border border-border bg-card p-8 shadow-card">
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <span className="text-sm text-muted-foreground">Estimated earnings</span>
+                  <span className="text-5xl font-bold text-primary md:text-6xl">$1,200</span>
+                  <span className="text-muted-foreground">per month</span>
+                </div>
+                <div className="mt-8 grid gap-6 text-left md:grid-cols-3">
+                  <div className="rounded-lg bg-secondary p-4">
+                    <BarChart3 className="mb-2 h-6 w-6 text-primary" />
+                    <p className="font-medium">7 nights booked</p>
+                    <p className="text-sm text-muted-foreground">Average bookings per month</p>
+                  </div>
+                  <div className="rounded-lg bg-secondary p-4">
+                    <DollarSign className="mb-2 h-6 w-6 text-primary" />
+                    <p className="font-medium">$175/night</p>
+                    <p className="text-sm text-muted-foreground">Average nightly rate</p>
+                  </div>
+                  <div className="rounded-lg bg-secondary p-4">
+                    <Home className="mb-2 h-6 w-6 text-primary" />
+                    <p className="font-medium">Entire home</p>
+                    <p className="text-sm text-muted-foreground">2 bedrooms · 1 bath</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Benefits */}
+        <section className="bg-secondary/30 py-16 md:py-24">
+          <div className="container">
+            <h2 className="text-center text-3xl font-bold md:text-4xl">
+              Why host with Staybnb?
+            </h2>
+            <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+              {benefits.map((benefit, index) => (
+                <div
+                  key={index}
+                  className="rounded-xl bg-background p-6 shadow-soft transition-shadow hover:shadow-card"
+                >
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <benefit.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="mb-2 text-lg font-semibold">{benefit.title}</h3>
+                  <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* How it works */}
+        <section className="py-16 md:py-24">
+          <div className="container">
+            <h2 className="text-center text-3xl font-bold md:text-4xl">
+              How to get started
+            </h2>
+            <div className="mt-12 grid gap-8 md:grid-cols-3">
+              {steps.map((step, index) => (
+                <div key={index} className="relative">
+                  {index < steps.length - 1 && (
+                    <div className="absolute right-0 top-8 hidden h-px w-full bg-border md:block" />
+                  )}
+                  <div className="relative z-10 flex flex-col items-center text-center md:items-start md:text-left">
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+                      {step.number}
+                    </div>
+                    <h3 className="mb-2 text-xl font-semibold">{step.title}</h3>
+                    <p className="text-muted-foreground">{step.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Features List */}
+        <section className="bg-secondary/30 py-16 md:py-24">
+          <div className="container">
+            <div className="mx-auto max-w-3xl">
+              <h2 className="text-center text-3xl font-bold md:text-4xl">
+                Everything you need to host
+              </h2>
+              <div className="mt-12 space-y-4">
+                {[
+                  "Easy-to-use listing creation tools",
+                  "Secure payment processing",
+                  "Guest screening and reviews",
+                  "Flexible cancellation policies",
+                  "Professional photography service",
+                  "Smart pricing suggestions",
+                  "Instant booking option",
+                  "Host analytics dashboard",
+                ].map((feature, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-4 rounded-lg bg-background p-4 shadow-soft"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success/10">
+                      <Check className="h-5 w-5 text-success" />
+                    </div>
+                    <span className="font-medium">{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="py-16 md:py-24">
+          <div className="container">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-bold md:text-4xl">
+                Ready to become a host?
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Join our community of hosts and start earning today.
+              </p>
+              <Link to="/auth">
+                <Button size="xl" className="mt-8 gap-2">
+                  Start hosting <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+export default Host;
