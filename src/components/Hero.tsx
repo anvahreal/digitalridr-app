@@ -27,7 +27,7 @@ export function Hero() {
               unique stays
             </span>
             <br />
-            around lagos
+            around Lagos
           </h1>
 
           {/* Subtitle */}
