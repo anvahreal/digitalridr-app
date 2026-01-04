@@ -9,7 +9,7 @@ import ListingDetail from "./pages/ListingDetail";
 import Auth from "./pages/Auth";
 import Host from "./pages/Host";
 import NotFound from "./pages/NotFound";
-import UserDashboard from "./pages/userDashboard";
+import UserDashboard from "./pages/UserDashboard";
 import HostDashboard from "./pages/HostDashboard";
 import CreateListing from "./pages/CreateListing";
 import Checkout from "./pages/Checkout";
