@@ -12,8 +12,6 @@ import {
   Share,
   MapPin,
   Users,
-  BedDouble,
-  Bath,
   Wifi,
   Car,
   Waves,
@@ -24,6 +22,8 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
+  ShieldCheck,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { cn, formatNaira } from "@/lib/utils";
@@ -53,12 +53,13 @@ const ListingDetail = () => {
 
   if (!listing) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="flex min-h-screen flex-col bg-background">
         <Header />
-        <main className="container py-16 text-center">
+        <main className="container flex flex-1 flex-col items-center justify-center py-16 text-center">
+          <div className="mb-4 text-6xl">🏠</div>
           <h1 className="mb-4 text-2xl font-bold">Listing not found</h1>
           <Link to="/">
-            <Button>Back to home</Button>
+            <Button className="bg-[#F48221] hover:bg-[#E36D0B]">Back to home</Button>
           </Link>
         </main>
         <Footer />
@@ -76,293 +77,205 @@ const ListingDetail = () => {
       toast.error("Please select check-in and check-out dates");
       return;
     }
-
-    //Navigate
     const params = new URLSearchParams({
       listing: listing.id,
       checkIn: checkIn.toISOString(),
       checkOut: checkOut.toISOString(),
       guests: guests.toString(),
     });
-    
-    toast.success("Reservation request sent! Redirecting to checkout...");
-
+    toast.success("Redirecting to checkout...");
     navigate(`/checkout?${params.toString()}`);
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <Header />
-      <main className="py-8">
-        <div className="container max-w-6xl">
-          {/* Title Section */}
+      <main className="py-6 md:py-8">
+        <div className="container max-w-6xl px-4 md:px-6">
+          {/* Header Section */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-foreground md:text-3xl">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
               {listing.title}
             </h1>
-            <div className="mt-2 flex flex-wrap items-center gap-4 text-sm">
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-foreground text-foreground" />
-                <span className="font-medium">{listing.rating}</span>
-                <span className="text-muted-foreground">
-                  · {listing.review_count} reviews
-                </span>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 fill-[#F48221] text-[#F48221]" />
+                  <span className="font-semibold">{listing.rating}</span>
+                  <span className="text-muted-foreground underline">
+                    ({listing.review_count} reviews)
+                  </span>
+                </div>
+                <span className="text-slate-300">•</span>
+                <div className="flex items-center gap-1 font-medium text-slate-600">
+                  <MapPin className="h-4 w-4 text-[#00AEEF]" />
+                  <span className="underline">{listing.location}</span>
+                </div>
               </div>
-              {listing.is_superhost && (
-                <span className="text-muted-foreground">· Superhost</span>
-              )}
-              <span className="flex items-center gap-1 text-muted-foreground underline">
-                <MapPin className="h-4 w-4" />
-                {listing.location}
-              </span>
-              <div className="ml-auto flex items-center gap-3">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <Share className="h-4 w-4" />
-                  Share
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="rounded-full hover:bg-slate-100">
+                  <Share className="mr-2 h-4 w-4" /> Share
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="gap-2"
+                  className="rounded-full hover:bg-slate-100"
                   onClick={() => setIsLiked(!isLiked)}
                 >
-                  <Heart
-                    className={cn(
-                      "h-4 w-4",
-                      isLiked && "fill-primary text-primary"
-                    )}
-                  />
-                  Save
+                  <Heart className={cn("mr-2 h-4 w-4", isLiked && "fill-red-500 text-red-500")} />
+                  {isLiked ? "Saved" : "Save"}
                 </Button>
               </div>
             </div>
           </div>
 
-          {/* Image Gallery */}
-          <div className="relative mb-8 overflow-hidden rounded-2xl">
-            <div className="grid gap-2 md:grid-cols-2">
-              <div className="relative aspect-[4/3] md:aspect-square">
+          {/* Luxury Image Gallery */}
+          <div className="relative mb-10 overflow-hidden rounded-2xl border bg-slate-100 shadow-sm">
+            <div className="grid gap-2 md:grid-cols-4 md:grid-rows-2">
+              <div className="relative col-span-2 row-span-2 aspect-[4/3] overflow-hidden md:aspect-auto">
                 <img
-                  src={listing.images[currentImage]}
+                  src={listing.images[0]}
                   alt={listing.title}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
                 />
               </div>
-              <div className="hidden gap-2 md:grid md:grid-cols-2">
-                {listing.images.slice(1, 5).map((image, index) => (
-                  <div key={index} className="relative aspect-square overflow-hidden">
-                    <img
-                      src={image}
-                      alt={`${listing.title} ${index + 2}`}
-                      className="h-full w-full object-cover transition-transform hover:scale-105"
-                    />
-                  </div>
-                ))}
-              </div>
+              {listing.images.slice(1, 5).map((image, index) => (
+                <div key={index} className="relative hidden overflow-hidden md:block">
+                  <img
+                    src={image}
+                    alt={`${listing.title} ${index + 2}`}
+                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                  />
+                </div>
+              ))}
             </div>
-
-            {/* Mobile carousel controls */}
-            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 md:hidden">
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() =>
-                  setCurrentImage((prev) =>
-                    prev === 0 ? listing.images.length - 1 : prev - 1
-                  )
-                }
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() =>
-                  setCurrentImage((prev) => (prev + 1) % listing.images.length)
-                }
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button
+              variant="secondary"
+              className="absolute bottom-4 right-4 hidden border-slate-900 bg-white/90 font-semibold shadow-sm md:flex"
+              onClick={() => setCurrentImage(0)}
+            >
+              Show all photos
+            </Button>
           </div>
 
-          {/* Content Grid */}
           <div className="grid gap-12 lg:grid-cols-[1fr_380px]">
-            {/* Main Content */}
-            <div>
-              {/* Host Info */}
-              <div className="flex items-center justify-between border-b border-border pb-6">
+            {/* Left Column: Details */}
+            <div className="space-y-8">
+              <div className="flex items-start justify-between border-b pb-8">
                 <div>
-                  <h2 className="text-xl font-semibold">
-                    Hosted by {listing.host_name}
+                  <h2 className="text-2xl font-semibold text-slate-900">
+                    Entire place hosted by {listing.host_name}
                   </h2>
-                  <p className="text-muted-foreground">
-                    {listing.max_guests} guests · {listing.bedrooms} bedroom
-                    {listing.bedrooms > 1 ? "s" : ""} · {listing.beds} bed
-                    {listing.beds > 1 ? "s" : ""} · {listing.bathrooms} bath
-                    {listing.bathrooms > 1 ? "s" : ""}
+                  <p className="mt-1 text-slate-600">
+                    {listing.max_guests} guests · {listing.bedrooms} bedroom{listing.bedrooms > 1 ? "s" : ""} · {listing.beds} bed{listing.beds > 1 ? "s" : ""} · {listing.bathrooms} bath
                   </p>
                 </div>
-                <img
-                  src={listing.host_avatar}
-                  alt={listing.host_name}
-                  className="h-14 w-14 rounded-full object-cover"
-                />
+                <div className="relative">
+                  <img
+                    src={listing.host_avatar}
+                    alt={listing.host_name}
+                    className="h-14 w-14 rounded-full border-2 border-white object-cover shadow-md"
+                  />
+                  {listing.is_superhost && (
+                    <div className="absolute -bottom-1 -right-1 rounded-full bg-white p-0.5 shadow-sm">
+                      <ShieldCheck className="h-5 w-5 text-[#F48221]" />
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Quick Info */}
-              <div className="grid gap-6 border-b border-border py-6">
+              {/* Unique Selling Points */}
+              <div className="space-y-6 border-b pb-8 text-slate-700">
                 <div className="flex gap-4">
-                  <Users className="h-6 w-6 text-foreground" />
+                  <Users className="mt-1 h-6 w-6 text-slate-400" />
                   <div>
-                    <p className="font-medium">Self check-in</p>
-                    <p className="text-sm text-muted-foreground">
-                      Check yourself in with the keypad.
-                    </p>
+                    <p className="font-semibold text-slate-900">Self check-in</p>
+                    <p className="text-sm text-slate-500">Check yourself in with the keypad.</p>
                   </div>
                 </div>
-                {listing.is_superhost && (
-                  <div className="flex gap-4">
-                    <Star className="h-6 w-6 text-foreground" />
-                    <div>
-                      <p className="font-medium">{listing.host_name} is a Superhost</p>
-                      <p className="text-sm text-muted-foreground">
-                        Superhosts are experienced, highly rated hosts.
-                      </p>
-                    </div>
+                <div className="flex gap-4">
+                  <CalendarIcon className="mt-1 h-6 w-6 text-slate-400" />
+                  <div>
+                    <p className="font-semibold text-slate-900">Free cancellation for 48 hours</p>
+                    <p className="text-sm text-slate-500">Full refund if you change your mind.</p>
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Description */}
-              <div className="border-b border-border py-6">
-                <p className="leading-relaxed text-foreground">{listing.description}</p>
+              <div className="border-b pb-8">
+                <h3 className="mb-4 text-xl font-semibold">About this space</h3>
+                <p className="leading-relaxed text-slate-600">{listing.description}</p>
               </div>
 
-              {/* Amenities */}
-              <div className="border-b border-border py-6">
-                <h3 className="mb-4 text-xl font-semibold">What this place offers</h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {listing.amenities.slice(0, 8).map((amenity) => {
+              <div className="border-b pb-8">
+                <h3 className="mb-6 text-xl font-semibold">What this place offers</h3>
+                <div className="grid gap-y-4 sm:grid-cols-2">
+                  {listing.amenities.map((amenity) => {
                     const Icon = amenityIcons[amenity] || Wifi;
                     return (
-                      <div key={amenity} className="flex items-center gap-4">
-                        <Icon className="h-6 w-6 text-muted-foreground" />
-                        <span>{amenity}</span>
+                      <div key={amenity} className="flex items-center gap-4 text-slate-700">
+                        <Icon className="h-6 w-6 text-slate-400" />
+                        <span className="text-md">{amenity}</span>
                       </div>
                     );
                   })}
                 </div>
               </div>
-
-              {/* Reviews Preview */}
-              <div className="py-6">
-                <h3 className="mb-4 text-xl font-semibold">
-                  <Star className="mr-2 inline-block h-5 w-5 fill-foreground text-foreground" />
-                  {listing.rating} · {listing.review_count} reviews
-                </h3>
-                <div className="grid gap-6 md:grid-cols-2">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="rounded-xl border border-border p-4">
-                      <div className="mb-3 flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-muted" />
-                        <div>
-                          <p className="font-medium">Guest {i}</p>
-                          <p className="text-sm text-muted-foreground">November 2024</p>
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Amazing stay! The property was exactly as described and the host was
-                        incredibly responsive. Would definitely recommend.
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
 
-            {/* Booking Card */}
-            <div className="lg:sticky lg:top-24 lg:h-fit">
-              <div className="rounded-xl border border-border bg-card p-6 shadow-card">
+            {/* Right Column: Booking Widget */}
+            <div className="relative">
+              <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50">
                 <div className="mb-6 flex items-baseline justify-between">
                   <div>
-                    <span className="text-2xl font-bold">{formatNaira(listing.price_per_night)}</span>
-                    <span className="text-muted-foreground"> night</span>
+                    <span className="text-2xl font-bold text-slate-900">{formatNaira(listing.price_per_night)}</span>
+                    <span className="text-slate-500"> / night</span>
                   </div>
-                  <div className="flex items-center gap-1 text-sm">
-                    <Star className="h-4 w-4 fill-foreground text-foreground" />
-                    <span className="font-medium">{listing.rating}</span>
-                    <span className="text-muted-foreground">
-                      · {listing.review_count} reviews
-                    </span>
+                  <div className="flex items-center gap-1 text-sm font-semibold">
+                    <Star className="h-3 w-3 fill-slate-900 text-slate-900" />
+                    {listing.rating}
                   </div>
                 </div>
 
-                {/* Date Selection */}
-                <div className="mb-4 rounded-lg border border-border">
-                  <div className="grid grid-cols-2 divide-x divide-border">
+                {/* Booking Interface */}
+                <div className="mb-4 overflow-hidden rounded-xl border border-slate-300">
+                  <div className="grid grid-cols-2 divide-x divide-slate-300 border-b border-slate-300">
                     <Popover>
                       <PopoverTrigger asChild>
-                        <button className="p-3 text-left hover:bg-secondary/50 transition-colors">
-                          <p className="text-xs font-semibold uppercase">Check-in</p>
-                          <p className={cn("text-sm", !checkIn && "text-muted-foreground")}>
-                            {checkIn ? format(checkIn, "MMM d, yyyy") : "Add date"}
-                          </p>
+                        <button className="flex flex-col p-3 text-left transition-colors hover:bg-slate-50">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-900">Check-in</span>
+                          <span className={cn("text-sm", !checkIn && "text-slate-400")}>
+                            {checkIn ? format(checkIn, "dd/MM/yyyy") : "Add date"}
+                          </span>
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={checkIn}
-                          onSelect={setCheckIn}
-                          disabled={(date) => date < new Date()}
-                        />
+                        <Calendar mode="single" selected={checkIn} onSelect={setCheckIn} disabled={(date) => date < new Date()} />
                       </PopoverContent>
                     </Popover>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <button className="p-3 text-left hover:bg-secondary/50 transition-colors">
-                          <p className="text-xs font-semibold uppercase">Checkout</p>
-                          <p className={cn("text-sm", !checkOut && "text-muted-foreground")}>
-                            {checkOut ? format(checkOut, "MMM d, yyyy") : "Add date"}
-                          </p>
+                        <button className="flex flex-col p-3 text-left transition-colors hover:bg-slate-50">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-900">Checkout</span>
+                          <span className={cn("text-sm", !checkOut && "text-slate-400")}>
+                            {checkOut ? format(checkOut, "dd/MM/yyyy") : "Add date"}
+                          </span>
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="end">
-                        <Calendar
-                          mode="single"
-                          selected={checkOut}
-                          onSelect={setCheckOut}
-                          disabled={(date) => date < (checkIn || new Date())}
-                        />
+                        <Calendar mode="single" selected={checkOut} onSelect={setCheckOut} disabled={(date) => date < (checkIn || new Date())} />
                       </PopoverContent>
                     </Popover>
                   </div>
-                  <div className="border-t border-border p-3">
-                    <p className="text-xs font-semibold uppercase">Guests</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">
-                        {guests} guest{guests > 1 ? "s" : ""}
-                      </span>
+                  <div className="p-3">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-900">Guests</span>
+                    <div className="mt-1 flex items-center justify-between">
+                      <span className="text-sm text-slate-700">{guests} guest{guests > 1 ? "s" : ""}</span>
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => setGuests(Math.max(1, guests - 1))}
-                          disabled={guests <= 1}
-                        >
+                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setGuests(Math.max(1, guests - 1))} disabled={guests <= 1}>
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => setGuests(Math.min(listing.max_guests, guests + 1))}
-                          disabled={guests >= listing.max_guests}
-                        >
+                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setGuests(Math.min(listing.max_guests, guests + 1))} disabled={guests >= listing.max_guests}>
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
@@ -370,27 +283,23 @@ const ListingDetail = () => {
                   </div>
                 </div>
 
-                <Button className="w-full" size="lg" onClick={handleReserve}>
-                  Reserve
+                <Button className="w-full rounded-xl bg-[#F48221] py-6 text-lg font-bold shadow-lg shadow-orange-200 transition-all hover:bg-[#E36D0B] active:scale-[0.98]" onClick={handleReserve}>
+                  Reserve Now
                 </Button>
 
-                <p className="mt-3 text-center text-sm text-muted-foreground">
-                  You won't be charged yet
-                </p>
+                <p className="mt-4 text-center text-xs text-slate-400 font-medium">No payment required yet</p>
 
                 {nights > 0 && (
-                  <div className="mt-4 space-y-3 border-t border-border pt-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="underline">
-                        {formatNaira(listing.price_per_night)} × {nights} nights
-                      </span>
+                  <div className="mt-6 space-y-3 border-t pt-6">
+                    <div className="flex justify-between text-slate-600">
+                      <span className="underline decoration-slate-300 underline-offset-4">{formatNaira(listing.price_per_night)} × {nights} nights</span>
                       <span>{formatNaira(subtotal)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="underline">Service fee</span>
+                    <div className="flex justify-between text-slate-600">
+                      <span className="underline decoration-slate-300 underline-offset-4">Service fee</span>
                       <span>{formatNaira(serviceFee)}</span>
                     </div>
-                    <div className="flex justify-between border-t border-border pt-3 font-semibold">
+                    <div className="flex justify-between pt-3 text-lg font-bold text-slate-900">
                       <span>Total</span>
                       <span>{formatNaira(total)}</span>
                     </div>

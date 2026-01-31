@@ -93,11 +93,18 @@ export default {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(100%)" },
         },
+        // NEW MARQUEE KEYFRAMES
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "shimmer": "shimmer 2s infinite",
+        // NEW MARQUEE ANIMATION
+        marquee: "marquee 35s linear infinite",
       },
     },
   },

@@ -76,7 +76,7 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              {/*<DropdownMenuItem asChild>
+            <DropdownMenuItem asChild>
                 <Link to="/auth" className="font-medium">Sign up</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
@@ -85,7 +85,7 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link to="/host">Host your home</Link>
-              </DropdownMenuItem>*/}
+              </DropdownMenuItem>
               <DropdownMenuItem>Help Center</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -3,20 +3,40 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, CreditCard, Heart, User, Settings, LogOut } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import {
+  Calendar,
+  MapPin,
+  CreditCard,
+  Heart,
+  User,
+  Settings,
+  LogOut,
+  ChevronRight,
+  Star,
+  Clock,
+} from "lucide-react";
 import { formatNaira } from "@/lib/utils";
 import { format } from "date-fns";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-// Mock data - replace with real data later
 const mockBookings = [
   {
     id: "1",
     listing: {
       title: "Luxurious Waterfront Apartment in Ikoyi",
       location: "Ikoyi, Lagos",
-      image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400",
+      image:
+        "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400",
     },
     checkIn: "2024-12-20",
     checkOut: "2024-12-27",
@@ -29,7 +49,8 @@ const mockBookings = [
     listing: {
       title: "Modern Studio in Lekki Phase 1",
       location: "Lekki, Lagos",
-      image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400",
+      image:
+        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400",
     },
     checkIn: "2024-11-15",
     checkOut: "2024-11-18",
@@ -62,255 +83,272 @@ const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("trips");
 
   const getStatusBadge = (status: string) => {
-    const variants = {
-      confirmed: "default",
-      completed: "secondary",
-      cancelled: "destructive",
-      pending: "outline",
-    } as const;
+    const styles = {
+      confirmed: "bg-emerald-50 text-emerald-700 border-emerald-100",
+      completed: "bg-blue-50 text-blue-700 border-blue-100",
+      cancelled: "bg-red-50 text-red-700 border-red-100",
+      pending: "bg-orange-50 text-orange-700 border-orange-100",
+    };
 
     return (
-      <Badge variant={variants[status as keyof typeof variants]}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+      <Badge
+        variant="outline"
+        className={`capitalize px-3 py-1 rounded-full font-bold text-[10px] ${styles[status as keyof typeof styles]}`}
+      >
+        {status}
       </Badge>
     );
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-50/50 font-sans">
       <Header />
-      <main className="py-8">
-        <div className="container max-w-6xl">
-          {/* Page Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold">My Account</h1>
-            <p className="text-muted-foreground">Manage your trips, favorites, and settings</p>
+      <main className="py-10">
+        <div className="container max-w-6xl px-4">
+          {/* Welcome Header */}
+          <div className="mb-10">
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+              Welcome back, John! 👋
+            </h1>
+            <p className="text-slate-500 font-medium mt-1">
+              You have 1 upcoming trip this month.
+            </p>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
-            {/* Sidebar */}
-            <aside className="hidden lg:block">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="mb-6 text-center">
-                    <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-                      <User className="h-10 w-10 text-primary" />
-                    </div>
-                    <h3 className="font-semibold">John Doe</h3>
-                    <p className="text-sm text-muted-foreground">john.doe@example.com</p>
-                  </div>
+          <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
+            {/* Nav Sidebar */}
+            <aside className="hidden lg:block space-y-6">
+              <div className="space-y-1">
+                {[
+                  { id: "trips", label: "My Trips", icon: Calendar },
+                  { id: "favorites", label: "Favorites", icon: Heart },
+                  { id: "profile", label: "Profile", icon: User },
+                  { id: "settings", label: "Settings", icon: Settings },
+                ].map((nav) => (
+                  <button
+                    key={nav.id}
+                    onClick={() => setActiveTab(nav.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                      activeTab === nav.id
+                        ? "bg-white text-[#F48221] shadow-sm shadow-orange-100"
+                        : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+                    }`}
+                  >
+                    <nav.icon
+                      className={`h-4 w-4 ${activeTab === nav.id ? "text-[#F48221]" : ""}`}
+                    />
+                    {nav.label}
+                  </button>
+                ))}
+              </div>
 
-                  <nav className="space-y-2">
-                    <Button
-                      variant={activeTab === "trips" ? "secondary" : "ghost"}
-                      className="w-full justify-start gap-2"
-                      onClick={() => setActiveTab("trips")}
-                    >
-                      <Calendar className="h-4 w-4" />
-                      My Trips
-                    </Button>
-                    <Button
-                      variant={activeTab === "favorites" ? "secondary" : "ghost"}
-                      className="w-full justify-start gap-2"
-                      onClick={() => setActiveTab("favorites")}
-                    >
-                      <Heart className="h-4 w-4" />
-                      Favorites
-                    </Button>
-                    <Button
-                      variant={activeTab === "profile" ? "secondary" : "ghost"}
-                      className="w-full justify-start gap-2"
-                      onClick={() => setActiveTab("profile")}
-                    >
-                      <User className="h-4 w-4" />
-                      Profile
-                    </Button>
-                    <Button
-                      variant={activeTab === "settings" ? "secondary" : "ghost"}
-                      className="w-full justify-start gap-2"
-                      onClick={() => setActiveTab("settings")}
-                    >
-                      <Settings className="h-4 w-4" />
-                      Settings
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start gap-2 text-destructive">
-                      <LogOut className="h-4 w-4" />
-                      Log out
-                    </Button>
-                  </nav>
-                </CardContent>
-              </Card>
+              <Separator className="bg-slate-200/60" />
+
+              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-red-400 hover:bg-red-50 transition-colors">
+                <LogOut className="h-4 w-4" /> Log out
+              </button>
             </aside>
 
-            {/* Main Content */}
-            <div>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="lg:hidden mb-6">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="trips">Trips</TabsTrigger>
-                  <TabsTrigger value="favorites">Favorites</TabsTrigger>
-                  <TabsTrigger value="profile">Profile</TabsTrigger>
-                  <TabsTrigger value="settings">Settings</TabsTrigger>
+            {/* Main Section */}
+            <div className="space-y-6">
+              {/* Mobile Nav Tabs */}
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="lg:hidden mb-6"
+              >
+                <TabsList className="grid w-full grid-cols-4 bg-slate-100 p-1 rounded-xl">
+                  <TabsTrigger
+                    value="trips"
+                    className="rounded-lg font-bold text-[11px]"
+                  >
+                    Trips
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="favorites"
+                    className="rounded-lg font-bold text-[11px]"
+                  >
+                    Saved
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="profile"
+                    className="rounded-lg font-bold text-[11px]"
+                  >
+                    User
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="settings"
+                    className="rounded-lg font-bold text-[11px]"
+                  >
+                    Setup
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
 
-              {/* Trips Tab */}
+              {/* TRIPS TAB */}
               {activeTab === "trips" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="mb-4 text-2xl font-bold">My Trips</h2>
-                    <Tabs defaultValue="upcoming">
-                      <TabsList>
-                        <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-                        <TabsTrigger value="past">Past</TabsTrigger>
-                        <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <Tabs defaultValue="upcoming" className="w-full">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-black text-slate-900">
+                        My Bookings
+                      </h2>
+                      <TabsList className="bg-transparent gap-4">
+                        <TabsTrigger
+                          value="upcoming"
+                          className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full px-4 text-xs font-bold"
+                        >
+                          Upcoming
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="past"
+                          className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full px-4 text-xs font-bold"
+                        >
+                          Past
+                        </TabsTrigger>
                       </TabsList>
+                    </div>
 
-                      <TabsContent value="upcoming" className="mt-6 space-y-4">
-                        {mockBookings
-                          .filter((b) => b.status === "confirmed")
-                          .map((booking) => (
-                            <Card key={booking.id}>
-                              <CardContent className="p-0">
-                                <div className="flex flex-col md:flex-row">
-                                  <img
-                                    src={booking.listing.image}
-                                    alt={booking.listing.title}
-                                    className="h-48 w-full object-cover md:h-auto md:w-48"
-                                  />
-                                  <div className="flex flex-1 flex-col justify-between p-6">
+                    <TabsContent value="upcoming" className="space-y-4">
+                      {mockBookings
+                        .filter((b) => b.status === "confirmed")
+                        .map((booking) => (
+                          <Card
+                            key={booking.id}
+                            className="border-none shadow-sm hover:shadow-md transition-shadow rounded-2xl overflow-hidden bg-white group"
+                          >
+                            <CardContent className="p-0 flex flex-col md:flex-row">
+                              <div className="relative w-full md:w-56 h-48 md:h-auto overflow-hidden">
+                                <img
+                                  src={booking.listing.image}
+                                  className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                  alt=""
+                                />
+                                <div className="absolute top-3 left-3">
+                                  {getStatusBadge(booking.status)}
+                                </div>
+                              </div>
+
+                              <div className="flex-1 p-6 flex flex-col justify-between">
+                                <div>
+                                  <div className="flex justify-between items-start">
+                                    <h3 className="font-bold text-slate-900 group-hover:text-[#F48221] transition-colors">
+                                      {booking.listing.title}
+                                    </h3>
+                                    <p className="text-lg font-black text-slate-900">
+                                      {formatNaira(booking.totalPrice)}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-slate-400 mt-1 mb-4">
+                                    <MapPin className="h-3 w-3" />
+                                    <span className="text-xs font-medium">
+                                      {booking.listing.location}
+                                    </span>
+                                  </div>
+
+                                  <div className="grid grid-cols-3 gap-4 py-3 px-4 bg-slate-50 rounded-xl">
                                     <div>
-                                      <div className="mb-2 flex items-start justify-between">
-                                        <h3 className="font-semibold">{booking.listing.title}</h3>
-                                        {getStatusBadge(booking.status)}
-                                      </div>
-                                      <p className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
-                                        <MapPin className="h-4 w-4" />
-                                        {booking.listing.location}
+                                      <p className="text-[10px] uppercase font-bold text-slate-400">
+                                        Check-in
                                       </p>
-                                      <div className="flex flex-wrap gap-4 text-sm">
-                                        <div>
-                                          <p className="text-muted-foreground">Check-in</p>
-                                          <p className="font-medium">
-                                            {format(new Date(booking.checkIn), "MMM d, yyyy")}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <p className="text-muted-foreground">Check-out</p>
-                                          <p className="font-medium">
-                                            {format(new Date(booking.checkOut), "MMM d, yyyy")}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <p className="text-muted-foreground">Guests</p>
-                                          <p className="font-medium">{booking.guests}</p>
-                                        </div>
-                                      </div>
+                                      <p className="text-xs font-bold text-slate-700">
+                                        {format(
+                                          new Date(booking.checkIn),
+                                          "MMM d, yyyy",
+                                        )}
+                                      </p>
                                     </div>
-                                    <div className="mt-4 flex items-center justify-between border-t pt-4">
-                                      <div>
-                                        <p className="text-sm text-muted-foreground">Total paid</p>
-                                        <p className="text-lg font-bold">{formatNaira(booking.totalPrice)}</p>
-                                      </div>
-                                      <div className="flex gap-2">
-                                        <Button variant="outline" size="sm">
-                                          Cancel
-                                        </Button>
-                                        <Button size="sm">View Details</Button>
-                                      </div>
+                                    <div>
+                                      <p className="text-[10px] uppercase font-bold text-slate-400">
+                                        Check-out
+                                      </p>
+                                      <p className="text-xs font-bold text-slate-700">
+                                        {format(
+                                          new Date(booking.checkOut),
+                                          "MMM d, yyyy",
+                                        )}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-[10px] uppercase font-bold text-slate-400">
+                                        Guests
+                                      </p>
+                                      <p className="text-xs font-bold text-slate-700">
+                                        {booking.guests} People
+                                      </p>
                                     </div>
                                   </div>
                                 </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                      </TabsContent>
 
-                      <TabsContent value="past" className="mt-6 space-y-4">
-                        {mockBookings
-                          .filter((b) => b.status === "completed")
-                          .map((booking) => (
-                            <Card key={booking.id}>
-                              <CardContent className="p-0">
-                                <div className="flex flex-col md:flex-row">
-                                  <img
-                                    src={booking.listing.image}
-                                    alt={booking.listing.title}
-                                    className="h-48 w-full object-cover md:h-auto md:w-48"
-                                  />
-                                  <div className="flex flex-1 flex-col justify-between p-6">
-                                    <div>
-                                      <div className="mb-2 flex items-start justify-between">
-                                        <h3 className="font-semibold">{booking.listing.title}</h3>
-                                        {getStatusBadge(booking.status)}
-                                      </div>
-                                      <p className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
-                                        <MapPin className="h-4 w-4" />
-                                        {booking.listing.location}
-                                      </p>
-                                      <div className="flex flex-wrap gap-4 text-sm">
-                                        <div>
-                                          <p className="text-muted-foreground">Check-in</p>
-                                          <p className="font-medium">
-                                            {format(new Date(booking.checkIn), "MMM d, yyyy")}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <p className="text-muted-foreground">Check-out</p>
-                                          <p className="font-medium">
-                                            {format(new Date(booking.checkOut), "MMM d, yyyy")}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="mt-4 flex items-center justify-between border-t pt-4">
-                                      <div>
-                                        <p className="text-sm text-muted-foreground">Total paid</p>
-                                        <p className="text-lg font-bold">{formatNaira(booking.totalPrice)}</p>
-                                      </div>
-                                      <Button size="sm">Leave Review</Button>
-                                    </div>
-                                  </div>
+                                <div className="mt-6 flex gap-3">
+                                  <Button className="flex-1 bg-[#F48221] hover:bg-orange-600 font-bold rounded-xl h-11">
+                                    Manage Booking
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    className="flex-1 border-slate-200 font-bold rounded-xl h-11"
+                                  >
+                                    Get Receipt
+                                  </Button>
                                 </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                      </TabsContent>
-
-                      <TabsContent value="cancelled" className="mt-6">
-                        <div className="rounded-lg border border-dashed p-12 text-center">
-                          <Calendar className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                          <h3 className="mb-2 font-semibold">No cancelled trips</h3>
-                          <p className="text-sm text-muted-foreground">
-                            You haven't cancelled any bookings.
-                          </p>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                  </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                    </TabsContent>
+                  </Tabs>
                 </div>
               )}
 
-              {/* Favorites Tab */}
+              {/* FAVORITES TAB */}
               {activeTab === "favorites" && (
-                <div>
-                  <h2 className="mb-4 text-2xl font-bold">My Favorites</h2>
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <h2 className="text-xl font-black text-slate-900 mb-6">
+                    Saved Places
+                  </h2>
                   <div className="grid gap-6 sm:grid-cols-2">
-                    {mockFavorites.map((listing) => (
-                      <Card key={listing.id} className="overflow-hidden">
-                        <img
-                          src={listing.image}
-                          alt={listing.title}
-                          className="h-48 w-full object-cover"
-                        />
-                        <CardContent className="p-4">
-                          <h3 className="mb-1 font-semibold">{listing.title}</h3>
-                          <p className="mb-2 text-sm text-muted-foreground">{listing.location}</p>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <span className="font-bold">{formatNaira(listing.price)}</span>
-                              <span className="text-sm text-muted-foreground"> / night</span>
+                    {mockFavorites.map((fav) => (
+                      <Card
+                        key={fav.id}
+                        className="border-none shadow-sm rounded-3xl overflow-hidden bg-white group cursor-pointer"
+                      >
+                        <div className="relative">
+                          <img
+                            src={fav.image}
+                            className="h-56 w-full object-cover"
+                            alt=""
+                          />
+                          <button className="absolute top-4 right-4 h-10 w-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-red-500 shadow-sm">
+                            <Heart className="h-5 w-5 fill-current" />
+                          </button>
+                        </div>
+                        <CardContent className="p-5">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-bold text-slate-900 leading-tight">
+                              {fav.title}
+                            </h3>
+                            <div className="flex items-center gap-1 font-bold text-sm">
+                              <Star className="h-3 w-3 fill-slate-900" />{" "}
+                              {fav.rating}
                             </div>
-                            <Button size="sm">View</Button>
+                          </div>
+                          <p className="text-xs text-slate-400 font-medium mb-4">
+                            {fav.location}
+                          </p>
+                          <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                            <p className="font-black text-lg text-slate-900">
+                              {formatNaira(fav.price)}{" "}
+                              <span className="text-xs text-slate-400 font-normal">
+                                / night
+                              </span>
+                            </p>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-[#00AEEF] font-bold"
+                            >
+                              Book Now <ChevronRight className="h-4 w-4 ml-1" />
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -319,112 +357,48 @@ const UserDashboard = () => {
                 </div>
               )}
 
-              {/* Profile Tab */}
+              {/* PROFILE TAB (Simplified) */}
               {activeTab === "profile" && (
-                <div>
-                  <h2 className="mb-6 text-2xl font-bold">Profile</h2>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Personal Information</CardTitle>
-                      <CardDescription>Update your personal details</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                          <label className="mb-2 block text-sm font-medium">Full Name</label>
-                          <input
-                            type="text"
-                            defaultValue="John Doe"
-                            className="w-full rounded-lg border border-input bg-background px-3 py-2"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-2 block text-sm font-medium">Email</label>
-                          <input
-                            type="email"
-                            defaultValue="john.doe@example.com"
-                            className="w-full rounded-lg border border-input bg-background px-3 py-2"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-2 block text-sm font-medium">Phone</label>
-                          <input
-                            type="tel"
-                            defaultValue="+234 801 234 5678"
-                            className="w-full rounded-lg border border-input bg-background px-3 py-2"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-2 block text-sm font-medium">Location</label>
-                          <input
-                            type="text"
-                            defaultValue="Lagos, Nigeria"
-                            className="w-full rounded-lg border border-input bg-background px-3 py-2"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="mb-2 block text-sm font-medium">Bio</label>
-                        <textarea
-                          rows={4}
-                          defaultValue="Traveler and explorer"
-                          className="w-full rounded-lg border border-input bg-background px-3 py-2"
+                <Card className="border-none shadow-sm rounded-3xl bg-white p-8 animate-in fade-in zoom-in-95">
+                  <div className="flex items-center gap-6 mb-8">
+                    <div className="h-24 w-24 bg-orange-100 rounded-3xl flex items-center justify-center text-[#F48221]">
+                      <User className="h-12 w-12" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-black text-slate-900">
+                        John Doe
+                      </h2>
+                      <p className="text-slate-400 font-medium">
+                        Member since 2023 • Lagos, Nigeria
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">
+                          Full Name
+                        </Label>
+                        <Input
+                          defaultValue="John Doe"
+                          className="bg-slate-50 border-none h-12 rounded-xl"
                         />
                       </div>
-                      <Button>Save Changes</Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
-              {/* Settings Tab */}
-              {activeTab === "settings" && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold">Settings</h2>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Notifications</CardTitle>
-                      <CardDescription>Manage your notification preferences</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {[
-                        { label: "Email notifications", description: "Receive booking updates via email" },
-                        { label: "SMS notifications", description: "Get text messages for important updates" },
-                        { label: "Marketing emails", description: "Receive newsletters and promotions" },
-                        { label: "Push notifications", description: "Get push notifications on your device" },
-                      ].map((item, index) => (
-                        <div key={index} className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{item.label}</p>
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
-                          </div>
-                          <Button variant="outline" size="sm">
-                            Toggle
-                          </Button>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Privacy & Security</CardTitle>
-                      <CardDescription>Manage your privacy settings</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <Button variant="outline" className="w-full justify-start">
-                        Change Password
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start">
-                        Two-Factor Authentication
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start text-destructive">
-                        Delete Account
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">
+                          Email Address
+                        </Label>
+                        <Input
+                          defaultValue="john.doe@example.com"
+                          className="bg-slate-50 border-none h-12 rounded-xl"
+                        />
+                      </div>
+                    </div>
+                    <Button className="bg-[#F48221] font-bold h-12 px-8 rounded-xl mt-4">
+                      Save Changes
+                    </Button>
+                  </div>
+                </Card>
               )}
             </div>
           </div>

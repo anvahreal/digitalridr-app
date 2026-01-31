@@ -7,129 +7,94 @@ export function Footer() {
   const footerLinks = {
     support: [
       { label: "Help Center", href: "#" },
-      { label: "Safety information", href: "#" },
-      { label: "Cancellation options", href: "#" },
-      { label: "Customer Support", href: "#" },
-    ],
-    community: [
-      { label: "Accessibility", href: "#" },
-      { label: "Referrals", href: "#" },
-      { label: "Gift cards", href: "#" },
-      { label: "Blog", href: "#" },
+      { label: "Safety info", href: "#" }, // Shortened for mobile
+      { label: "Cancellations", href: "#" }, // Shortened
     ],
     hosting: [
       { label: "Host your home", href: "/host" },
-      { label: "Host an experience", href: "#" },
-      { label: "Responsible hosting", href: "#" },
       { label: "Resource Center", href: "#" },
     ],
     about: [
       { label: "About Us", href: "#" },
-      { label: "Newsroom", href: "#" },
-      { label: "Careers", href: "#" },
       { label: "Contact", href: "#" },
     ],
   };
 
   return (
-    <footer className="border-t border-border bg-secondary/30">
-      <div className="container py-12 md:py-16">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+    <footer className="border-t border-slate-100 bg-white">
+      <div className="container max-w-7xl py-8 md:py-12">
+        {/* Main Links Grid - Better wrapping on mobile */}
+        <div className="grid grid-cols-2 gap-y-8 gap-x-4 md:grid-cols-4 lg:grid-cols-4 mb-10">
           <div>
-            <h3 className="mb-4 font-semibold text-foreground">Support</h3>
-            <ul className="space-y-3">
+            <h3 className="mb-3 text-xs font-black uppercase tracking-widest text-slate-900">Support</h3>
+            <ul className="space-y-2">
               {footerLinks.support.map((link) => (
                 <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
+                  <Link to={link.href} className="text-sm text-slate-500 hover:text-primary transition-all">
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
+          
           <div>
-            <h3 className="mb-4 font-semibold text-foreground">Community</h3>
-            <ul className="space-y-3">
-              {footerLinks.community.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="mb-4 font-semibold text-foreground">Hosting</h3>
-            <ul className="space-y-3">
+            <h3 className="mb-3 text-xs font-black uppercase tracking-widest text-slate-900">Hosting</h3>
+            <ul className="space-y-2">
               {footerLinks.hosting.map((link) => (
                 <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
+                  <Link to={link.href} className="text-sm text-slate-500 hover:text-primary transition-all">
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
+
           <div>
-            <h3 className="mb-4 font-semibold text-foreground">Digital Ridr</h3>
-            <ul className="space-y-3">
+            <h3 className="mb-3 text-xs font-black uppercase tracking-widest text-slate-900">Digital Ridr</h3>
+            <ul className="space-y-2">
               {footerLinks.about.map((link) => (
                 <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
+                  <Link to={link.href} className="text-sm text-slate-500 hover:text-primary transition-all">
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* Socials moved here for mobile visibility */}
+          <div className="col-span-1">
+            <h3 className="mb-3 text-xs font-black uppercase tracking-widest text-slate-900">Connect</h3>
+            <div className="flex gap-4">
+               <a href="#" className="p-2 bg-slate-50 rounded-full text-slate-600 hover:bg-primary hover:text-white transition-all">
+                 <Instagram className="h-4 w-4" />
+               </a>
+               <a href="#" className="p-2 bg-slate-50 rounded-full text-slate-600 hover:bg-primary hover:text-white transition-all">
+                 <Twitter className="h-4 w-4" />
+               </a>
+               <a href="#" className="p-2 bg-slate-50 rounded-full text-slate-600 hover:bg-primary hover:text-white transition-all">
+                 <Facebook className="h-4 w-4" />
+               </a>
+            </div>
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-            <span>© {currentYear} Digital Ridr, Inc.</span>
-            <span>·</span>
-            <Link to="#" className="hover:text-foreground transition-colors">
-              Privacy
-            </Link>
-            <span>·</span>
-            <Link to="#" className="hover:text-foreground transition-colors">
-              Terms
-            </Link>
-            <span>·</span>
-            <Link to="#" className="hover:text-foreground transition-colors">
-              Sitemap
-            </Link>
+        {/* Bottom Bar - Clean & Compact */}
+        <div className="pt-6 border-t border-slate-50 flex flex-col-reverse md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[12px] font-medium text-slate-400">
+            <span>© {currentYear} Digital Ridr</span>
+            <span className="hidden md:inline">·</span>
+            <Link to="#" className="hover:text-slate-900">Privacy</Link>
+            <Link to="#" className="hover:text-slate-900">Terms</Link>
           </div>
 
           <div className="flex items-center gap-6">
-            <button className="flex items-center gap-2 text-sm font-medium text-foreground hover:underline">
-              <Globe className="h-4 w-4" />
+            <button className="flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-primary transition-colors">
+              <Globe className="h-4 w-4 text-primary" />
               English (NG)
             </button>
-            <div className="flex items-center gap-4">
-              <a href="#" className="text-foreground hover:text-primary transition-colors">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-foreground hover:text-primary transition-colors">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-foreground hover:text-primary transition-colors">
-                <Instagram className="h-5 w-5" />
-              </a>
-            </div>
           </div>
         </div>
       </div>

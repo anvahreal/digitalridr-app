@@ -13,6 +13,8 @@ import UserDashboard from "./pages/UserDashboard";
 import HostDashboard from "./pages/HostDashboard";
 import CreateListing from "./pages/CreateListing";
 import Checkout from "./pages/Checkout";
+import MessagingCenter from "./pages/MessagingCenter";
+import HostWallet from "./pages/HostWallet";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +31,8 @@ const App = () => (
           <Route path="/listing/:id" element={<ListingDetail />} />
           <Route path="/host/create-listing" element={<CreateListing />} />
           <Route path="/host/dashboard" element={<HostDashboard />} />
+          <Route path="/host/messages" element={<MessagingCenter />} />
+          <Route path="/host/wallet" element={<HostWallet />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/host" element={<Host />} />
           <Route path="/checkout" element={<Checkout />} />

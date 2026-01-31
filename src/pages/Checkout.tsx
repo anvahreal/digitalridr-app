@@ -3,314 +3,369 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { mockListings } from "@/data/mockListings";
 import { formatNaira } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
-import { Calendar, MapPin, Users, Star, CreditCard, Shield, AlertCircle } from "lucide-react";
+import {
+  Star,
+  CreditCard,
+  Shield,
+  ChevronLeft,
+  Wallet,
+  Building2,
+  Plus,
+  Minus,
+  Copy,
+  CheckCircle2,
+  Loader2,
+  Info,
+  Clock,
+  Ban,
+  Cigarette,
+  PawPrint,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { toast } from "sonner";
 
 const Checkout = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
-  // Get params from URL
+
+  // Basic Data
   const listingId = searchParams.get("listing");
-  const checkInStr = searchParams.get("checkIn");
-  const checkOutStr = searchParams.get("checkOut");
-  const guestsStr = searchParams.get("guests");
-
   const listing = mockListings.find((l) => l.id === listingId);
-  const checkIn = checkInStr ? new Date(checkInStr) : new Date();
-  const checkOut = checkOutStr ? new Date(checkOutStr) : new Date();
-  const guests = guestsStr ? parseInt(guestsStr) : 1;
+  const checkIn = new Date(searchParams.get("checkIn") || Date.now());
+  const checkOut = new Date(searchParams.get("checkOut") || Date.now());
 
+  // UI States
+  const [guests, setGuests] = useState(
+    parseInt(searchParams.get("guests") || "1"),
+  );
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [isEditingGuests, setIsEditingGuests] = useState(false);
 
-  if (!listing) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container py-16 text-center">
-          <h1 className="mb-4 text-2xl font-bold">Listing not found</h1>
-          <Button onClick={() => navigate("/")}>Back to home</Button>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  // Dropdown States (Manual Accordion)
+  const [openSection, setOpenSection] = useState<string | null>("house-rules");
 
-  const nights = differenceInDays(checkOut, checkIn);
-  const subtotal = nights * listing.price_per_night;
-  const serviceFee = Math.round(subtotal * 0.12);
-  const total = subtotal + serviceFee;
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationStep, setVerificationStep] = useState<
+    "pending" | "success"
+  >("pending");
 
-  const handlePayment = () => {
-    if (!agreedToTerms) {
-      toast.error("Please agree to the terms and conditions");
-      return;
-    }
-    
-    toast.success("Payment successful! Booking confirmed.");
-    setTimeout(() => {
+  if (!listing) return null;
+
+  const nights = Math.max(1, differenceInDays(checkOut, checkIn));
+  const serviceFee = Math.round(nights * listing.price_per_night * 0.12);
+  const total = nights * listing.price_per_night + serviceFee;
+
+  const handlePaymentSubmit = () => {
+    if (paymentMethod === "bank") {
+      setIsVerifying(true);
+      setTimeout(() => setVerificationStep("success"), 4000);
+    } else {
+      toast.success("Payment Successful!");
       navigate("/dashboard");
-    }, 2000);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-50/50 font-sans">
       <Header />
       <main className="py-8">
-        <div className="container max-w-6xl">
-          <div className="mb-8">
-            <Button variant="ghost" onClick={() => navigate(-1)}>
-              ← Back
+        <div className="container max-w-5xl px-4">
+          <div className="mb-6 flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="rounded-full"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" /> Back
             </Button>
-            <h1 className="mt-4 text-3xl font-bold">Confirm and pay</h1>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              Confirm and pay
+            </h1>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
-            {/* Main Content */}
-            <div className="space-y-6">
-              {/* Your Trip */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your trip</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Dates</p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(checkIn, "MMM d")} - {format(checkOut, "MMM d, yyyy")}
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      Edit
-                    </Button>
+          <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+            <div className="space-y-8">
+              {/* Trip Details */}
+              <Card className="border-none shadow-sm overflow-hidden bg-white rounded-2xl">
+                <div className="grid grid-cols-2 divide-x divide-slate-100">
+                  <div className="p-5">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">
+                      Dates
+                    </p>
+                    <p className="text-sm font-bold text-slate-800 mt-1">
+                      {format(checkIn, "MMM d")} – {format(checkOut, "d")}
+                    </p>
                   </div>
-                  <Separator />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Guests</p>
-                      <p className="text-sm text-muted-foreground">
-                        {guests} {guests === 1 ? "guest" : "guests"}
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      Edit
-                    </Button>
+                  <div className="p-5">
+                    <p className="text-[10px] font-bold uppercase text-slate-400">
+                      Guests
+                    </p>
+                    <p className="text-sm font-bold text-slate-800 mt-1">
+                      {guests} Guest{guests > 1 ? "s" : ""}
+                    </p>
                   </div>
-                </CardContent>
+                </div>
               </Card>
 
-              {/* Payment Method */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Pay with</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    {[
-                      { id: "card", label: "Credit or debit card", icon: CreditCard },
-                      { id: "paystack", label: "Paystack", icon: CreditCard },
-                      { id: "bank", label: "Bank transfer", icon: CreditCard },
-                    ].map((method) => (
-                      <label
-                        key={method.id}
-                        className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors ${
-                          paymentMethod === method.id ? "border-primary bg-primary/5" : "hover:bg-secondary"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="payment"
-                          value={method.id}
-                          checked={paymentMethod === method.id}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                          className="h-4 w-4"
+              {/* Payment Selection */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-black text-slate-900 px-1">
+                  Choose how to pay
+                </h3>
+                <div className="grid grid-cols-3 gap-3">
+                  {["card", "paystack", "bank"].map((id) => (
+                    <button
+                      key={id}
+                      onClick={() => setPaymentMethod(id)}
+                      className={`flex flex-col items-center gap-2 rounded-2xl border-2 py-4 transition-all ${paymentMethod === id ? "border-[#F48221] bg-orange-50/30" : "border-white bg-white shadow-sm"}`}
+                    >
+                      {id === "card" && (
+                        <CreditCard
+                          className={`h-5 w-5 ${paymentMethod === id ? "text-[#F48221]" : "text-slate-400"}`}
                         />
-                        <method.icon className="h-5 w-5" />
-                        <span className="font-medium">{method.label}</span>
-                      </label>
-                    ))}
-                  </div>
+                      )}
+                      {id === "paystack" && (
+                        <Wallet
+                          className={`h-5 w-5 ${paymentMethod === id ? "text-[#F48221]" : "text-slate-400"}`}
+                        />
+                      )}
+                      {id === "bank" && (
+                        <Building2
+                          className={`h-5 w-5 ${paymentMethod === id ? "text-[#F48221]" : "text-slate-400"}`}
+                        />
+                      )}
+                      <span className="text-[11px] font-bold capitalize">
+                        {id}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                  {paymentMethod === "card" && (
-                    <div className="space-y-4 rounded-lg border p-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="cardNumber">Card number</Label>
-                        <Input
-                          id="cardNumber"
-                          placeholder="1234 5678 9012 3456"
-                          maxLength={19}
-                        />
+              {/* REWRITTEN DROPDOWNS (Things to Know) */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-black text-slate-900 px-1">
+                  Things to know
+                </h3>
+
+                {/* House Rules Dropdown */}
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
+                  <button
+                    onClick={() =>
+                      setOpenSection(
+                        openSection === "house-rules" ? null : "house-rules",
+                      )
+                    }
+                    className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                        <Building2 className="h-4 w-4" />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="expiry">Expiry</Label>
-                          <Input id="expiry" placeholder="MM / YY" maxLength={5} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="cvv">CVV</Label>
-                          <Input id="cvv" placeholder="123" maxLength={3} type="password" />
-                        </div>
+                      <span className="font-bold text-sm text-slate-700">
+                        House Rules
+                      </span>
+                    </div>
+                    {openSection === "house-rules" ? (
+                      <ChevronUp className="h-4 w-4 text-slate-400" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-slate-400" />
+                    )}
+                  </button>
+
+                  {openSection === "house-rules" && (
+                    <div className="px-5 pb-6 pt-2 animate-in slide-in-from-top-2 duration-200">
+                      <div className="bg-slate-50/50 rounded-xl p-4 mb-4">
+                        <p className="text-xs text-slate-600 leading-relaxed italic">
+                          "Welcome to my home! I only ask that you treat the
+                          space with the same love and respect as you would your
+                          own. Enjoy your stay!"
+                        </p>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="cardName">Name on card</Label>
-                        <Input id="cardName" placeholder="Full name" />
+
+                      <div className="space-y-4">
+                        <div className="flex gap-3">
+                          <Clock className="h-4 w-4 text-slate-400 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold text-slate-700">
+                              Check-in / Check-out
+                            </p>
+                            <p className="text-[11px] text-slate-500">
+                              Check-in starts 2:00 PM. Please checkout by 11:00
+                              AM.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <Ban className="h-4 w-4 text-slate-400 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold text-slate-700">
+                              No Parties or Loud Music
+                            </p>
+                            <p className="text-[11px] text-slate-500">
+                              This is a quiet residential area. Please keep
+                              noise to a minimum after 10:00 PM.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <Cigarette className="h-4 w-4 text-slate-400 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold text-slate-700">
+                              Smoking Policy
+                            </p>
+                            <p className="text-[11px] text-slate-500">
+                              Strictly no smoking inside the building. Use the
+                              balcony if necessary.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <Shield className="h-4 w-4 text-slate-400 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold text-slate-700">
+                              General Care
+                            </p>
+                            <p className="text-[11px] text-slate-500">
+                              Please turn off the AC and lights when leaving the
+                              apartment. Lock all doors.
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
 
-              {/* Required for your trip */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Required for your trip</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+234 801 234 5678"
-                      defaultValue="+234 801 234 5678"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      The host may need to contact you about your reservation
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Cancellation Policy */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Cancellation policy</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-3 text-sm">
-                    <strong>Free cancellation before Dec 13.</strong> Cancel before check-in on
-                    Dec 20 for a partial refund.
-                  </p>
-                  <Button variant="link" className="h-auto p-0 text-sm">
-                    Learn more
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Ground Rules */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Ground rules</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <p>We ask every guest to remember a few simple things about what makes a great guest:</p>
-                  <ul className="ml-4 list-disc space-y-1 text-muted-foreground">
-                    <li>Follow the house rules</li>
-                    <li>Treat your Host's home like your own</li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Terms */}
-              <Card className="border-primary/20 bg-primary/5">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <div className="space-y-3 text-sm">
-                      <p>
-                        By selecting the button below, I agree to the Host's House Rules, Ground
-                        rules for guests, Digital Ridr's Rebooking and Refund Policy, and that
-                        Digital Ridr can charge my payment method if I'm responsible for damage.
-                      </p>
-                      <label className="flex items-center gap-2">
-                        <Checkbox
-                          checked={agreedToTerms}
-                          onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
-                        />
-                        <span>I agree to the Terms and Conditions</span>
-                      </label>
+                {/* Cancellation Dropdown */}
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  <button
+                    onClick={() =>
+                      setOpenSection(
+                        openSection === "cancellation" ? null : "cancellation",
+                      )
+                    }
+                    className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center text-[#F48221]">
+                        <Info className="h-4 w-4" />
+                      </div>
+                      <span className="font-bold text-sm text-slate-700">
+                        Cancellation Policy
+                      </span>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    {openSection === "cancellation" ? (
+                      <ChevronUp className="h-4 w-4 text-slate-400" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-slate-400" />
+                    )}
+                  </button>
+                  {openSection === "cancellation" && (
+                    <div className="px-5 pb-5 pt-2 animate-in slide-in-from-top-2 duration-200">
+                      <p className="text-xs text-slate-500 leading-relaxed font-medium mb-4">
+                        Free cancellation for 48 hours. After that, cancel
+                        before check-in and get a 50% refund, minus the service
+                        fee.
+                      </p>
+                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">
+                          Full refund until
+                        </p>
+                        <p className="text-xs font-bold text-slate-700">
+                          {format(
+                            new Date(checkIn.getTime() - 48 * 60 * 60 * 1000),
+                            "MMMM d, h:mm a",
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-              {/* Confirm Button */}
-              <Button
-                size="lg"
-                className="w-full"
-                onClick={handlePayment}
-                disabled={!agreedToTerms}
-              >
-                Confirm and pay
-              </Button>
+              {/* Terms and Button */}
+              <div className="space-y-4 pt-4">
+                <div className="flex items-start gap-3 p-5 bg-orange-50/40 rounded-3xl border border-orange-100/50">
+                  <Checkbox
+                    id="terms"
+                    checked={agreedToTerms}
+                    onCheckedChange={(c) => setAgreedToTerms(c as boolean)}
+                  />
+                  <Label
+                    htmlFor="terms"
+                    className="text-[11px] text-slate-500 leading-tight cursor-pointer font-medium"
+                  >
+                    I agree to the House Rules, Cancellation Policy, and the
+                    Refund Policy.
+                  </Label>
+                </div>
+                <Button
+                  size="lg"
+                  className="w-full h-16 bg-[#F48221] hover:bg-orange-600 text-lg font-bold rounded-2xl shadow-xl shadow-orange-200"
+                  disabled={!agreedToTerms}
+                  onClick={handlePaymentSubmit}
+                >
+                  {paymentMethod === "bank"
+                    ? "I have made the transfer"
+                    : "Confirm and pay"}
+                </Button>
+              </div>
             </div>
 
-            {/* Sidebar - Booking Summary */}
-            <div className="lg:sticky lg:top-24 lg:h-fit">
-              <Card>
-                <CardContent className="p-6">
-                  {/* Listing Preview */}
-                  <div className="mb-6 flex gap-4">
-                    <img
-                      src={listing.images[0]}
-                      alt={listing.title}
-                      className="h-24 w-24 rounded-lg object-cover"
-                    />
-                    <div>
-                      <h3 className="mb-1 font-semibold line-clamp-2">{listing.title}</h3>
-                      <p className="mb-2 flex items-center gap-1 text-sm text-muted-foreground">
-                        <MapPin className="h-3 w-3" />
-                        {listing.location}
-                      </p>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Star className="h-3 w-3 fill-foreground" />
-                        <span className="font-medium">{listing.rating}</span>
-                        <span className="text-muted-foreground">({listing.review_count})</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator className="my-6" />
-
-                  {/* Price Details */}
-                  <div className="space-y-3">
-                    <h4 className="font-semibold">Price details</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="underline">
-                          {formatNaira(listing.price_per_night)} × {nights} nights
-                        </span>
-                        <span>{formatNaira(subtotal)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="underline">Service fee</span>
-                        <span>{formatNaira(serviceFee)}</span>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="flex justify-between font-semibold">
-                      <span>Total (NGN)</span>
-                      <span>{formatNaira(total)}</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 flex items-start gap-2 rounded-lg bg-secondary p-3 text-sm">
-                    <Shield className="mt-0.5 h-4 w-4 shrink-0" />
-                    <p className="text-muted-foreground">
-                      Your payment information is encrypted and secure
+            {/* Price Sidebar */}
+            <div className="lg:sticky lg:top-24 h-fit">
+              <Card className="border-none shadow-xl rounded-[32px] overflow-hidden bg-white">
+                <div className="p-6 bg-slate-900 text-white flex gap-4">
+                  <img
+                    src={listing.images[0]}
+                    className="h-16 w-16 rounded-xl object-cover"
+                    alt=""
+                  />
+                  <div>
+                    <h3 className="text-sm font-bold line-clamp-2">
+                      {listing.title}
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">
+                      <Star className="h-3 w-3 fill-orange-400 text-orange-400" />{" "}
+                      {listing.rating}
                     </p>
+                  </div>
+                </div>
+                <CardContent className="p-8 space-y-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500 font-medium">
+                      Total Stay
+                    </span>
+                    <span className="font-bold text-slate-800">
+                      {formatNaira(total)}
+                    </span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between items-center">
+                    <span className="text-base font-black text-slate-900">
+                      Total
+                    </span>
+                    <span className="text-xl font-black text-slate-900">
+                      {formatNaira(total)}
+                    </span>
+                  </div>
+                  <div className="bg-emerald-50 text-emerald-700 p-4 rounded-2xl flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider">
+                    <Shield className="h-5 w-5" /> Secure Checkout
                   </div>
                 </CardContent>
               </Card>
