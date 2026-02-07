@@ -42,12 +42,14 @@ const Checkout = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const { user } = useProfile();
+  const { user, loading: userLoading } = useProfile();
 
   // Basic Data
   const listingId = searchParams.get("listing") || undefined;
-  // const listing = mockListings.find((l) => l.id === listingId); // OLD
-  const { listing, loading } = useListing(listingId);
+  const { listing, loading: listingLoading } = useListing(listingId);
+
+  // Combine loading states
+  const loading = userLoading || listingLoading;
 
   const rawCheckIn = searchParams.get("checkIn");
   const rawCheckOut = searchParams.get("checkOut");
@@ -75,7 +77,42 @@ const Checkout = () => {
     "pending" | "success"
   >("pending");
 
+  // Redirect if not logged in
+  if (!userLoading && !user) {
+    // Optional: You could render a message or redirect
+    // Given the error was crash, let's redirect
+    // But we can't redirect during render easily without useEffect, 
+    // usually it's better to show a "Please login" state or use useEffect.
+    // For now, I'll return a layout that redirects or tells them to login.
+    // actually, using navigate in useEffect is better pattern, but here for simplicity:
+    // returning null and navigating in useEffect would be best.
+    // But let's check header/footer usage.
+  }
+
+  // Effect for redirect
+  if (!userLoading && !user) {
+    // We'll handle this with a visual prompted or effect.
+    // However, since this is a straight fix, let's just show a login prompt instead of crashing
+    // OR just verify in processBooking.
+    // But the user asked for "Continue" implying they want it fixed.
+    // The previous error was a crash.
+  }
+
   if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[#F48221]" /></div>;
+
+  if (!user) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-4">
+        <h1 className="text-2xl font-bold text-slate-900">Please Log In</h1>
+        <p className="text-slate-500">You need to be logged in to complete your booking.</p>
+        <Button onClick={() => {
+          const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+          navigate(`/auth?returnTo=${returnUrl}`);
+        }}>Log In / Sign Up</Button>
+      </div>
+    )
+  }
+
   if (!listing) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4">
@@ -94,7 +131,8 @@ const Checkout = () => {
     setIsVerifying(true);
     try {
       const { error } = await supabase.from('bookings').insert({
-        user_id: user!.id,
+        guest_id: user.id,
+        host_id: listing.host_id,
         listing_id: listingId,
         check_in: checkIn.toISOString(),
         check_out: checkOut.toISOString(),
@@ -140,7 +178,6 @@ const Checkout = () => {
 
           <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
             <div className="space-y-8">
-              {/* Trip Details */}
               {/* Trip Details */}
               <Card className="border-none shadow-sm overflow-hidden bg-card rounded-2xl">
                 <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">

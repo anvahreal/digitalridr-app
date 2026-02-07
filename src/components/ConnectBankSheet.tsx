@@ -80,24 +80,24 @@ export function ConnectBankSheet({ onAccountConnected }: ConnectBankSheetProps) 
       <SheetTrigger asChild>
         <Button variant="outline" className="rounded-2xl border-2 font-black">Add Bank Account</Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-[3rem] p-8 max-w-2xl mx-auto border-none">
+      <SheetContent side="bottom" className="rounded-t-[3rem] p-8 max-w-2xl mx-auto border-none bg-card">
         {step === 1 ? (
           <div className="space-y-6">
-            <div className="h-16 w-16 bg-slate-100 rounded-[1.5rem] flex items-center justify-center text-slate-900">
+            <div className="h-16 w-16 bg-muted rounded-[1.5rem] flex items-center justify-center text-foreground">
               <Landmark size={32} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-slate-900 leading-tight">Where should we send your earnings?</h2>
-              <p className="text-slate-500 font-medium">Add a Nigerian bank account for direct payouts.</p>
+              <h2 className="text-2xl font-black text-foreground leading-tight">Where should we send your earnings?</h2>
+              <p className="text-muted-foreground font-medium">Add a Nigerian bank account for direct payouts.</p>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Select Bank</label>
+                <label className="text-[10px] font-black text-muted-foreground uppercase ml-2">Select Bank</label>
                 <select
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  className="w-full h-14 rounded-2xl bg-slate-50 border-none px-4 font-bold text-slate-900 focus:ring-2 ring-primary transition-all appearance-none"
+                  className="w-full h-14 rounded-2xl bg-muted/50 border-none px-4 font-bold text-foreground focus:ring-2 ring-primary transition-all appearance-none"
                 >
                   <option>GTBank</option>
                   <option>Zenith Bank</option>
@@ -108,12 +108,12 @@ export function ConnectBankSheet({ onAccountConnected }: ConnectBankSheetProps) 
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Account Number</label>
+                <label className="text-[10px] font-black text-muted-foreground uppercase ml-2">Account Number</label>
                 <Input
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   placeholder="0123456789"
-                  className="h-14 rounded-2xl bg-slate-50 border-none px-4 font-bold text-lg"
+                  className="h-14 rounded-2xl bg-muted/50 border-none px-4 font-bold text-lg text-foreground placeholder:text-muted-foreground/50"
                 />
               </div>
             </div>
@@ -121,29 +121,29 @@ export function ConnectBankSheet({ onAccountConnected }: ConnectBankSheetProps) 
             <Button
               onClick={handleVerify}
               disabled={loading || accountNumber.length < 10}
-              className="w-full h-14 rounded-2xl bg-slate-900 text-white font-black text-lg shadow-xl shadow-slate-200"
+              className="w-full h-14 rounded-2xl bg-primary text-primary-foreground font-black text-lg shadow-xl hover:bg-primary/90"
             >
               {loading ? <Loader2 className="animate-spin" /> : "Verify Account"}
             </Button>
           </div>
         ) : (
           <div className="py-10 text-center space-y-6">
-            <div className="h-20 w-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+            <div className="h-20 w-20 bg-emerald-500/10 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle size={40} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-slate-900">Account Verified!</h2>
-              <p className="font-bold text-slate-500 mt-2">{accountName} - {bankName}</p>
-              <p className="text-sm text-slate-400 font-medium">****{accountNumber.slice(-4)}</p>
+              <h2 className="text-2xl font-black text-foreground">Account Verified!</h2>
+              <p className="font-bold text-muted-foreground mt-2">{accountName} - {bankName}</p>
+              <p className="text-sm text-muted-foreground font-medium">****{accountNumber.slice(-4)}</p>
             </div>
             <Button
-              className="w-full h-14 rounded-2xl bg-slate-900 text-white font-black"
+              className="w-full h-14 rounded-2xl bg-primary text-primary-foreground font-black hover:bg-primary/90"
               onClick={handleSave}
               disabled={loading}
             >
               {loading ? <Loader2 className="animate-spin" /> : "Confirm & Save"}
             </Button>
-            <Button variant="ghost" className="font-bold text-slate-400" onClick={() => setStep(1)} disabled={loading}>
+            <Button variant="ghost" className="font-bold text-muted-foreground hover:bg-muted" onClick={() => setStep(1)} disabled={loading}>
               Back
             </Button>
           </div>

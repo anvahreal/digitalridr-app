@@ -41,6 +41,14 @@ const Index = () => {
 
         {/* Horizontal Scrolling Sections */}
         <div className="space-y-4 pb-16">
+          {/* New on DigitalRidr */}
+          <ListingSection
+            title="New on DigitalRidr"
+            subtitle="Freshly added apartments"
+            items={listings.slice(0, 8)}
+            loading={loading}
+          />
+
           {/* Guest Favorites */}
           <ListingSection
             title="Guest favorites"

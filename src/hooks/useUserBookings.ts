@@ -39,7 +39,7 @@ export const useUserBookings = () => {
               images
             )
           `)
-                    .eq('user_id', user.id)
+                    .eq('guest_id', user.id)
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;

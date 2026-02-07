@@ -17,7 +17,7 @@ const CreateListing = () => {
   const { id } = useParams(); // Check if editing
   const isEditMode = !!id;
 
-  const { user } = useProfile();
+  const { user, updateProfile } = useProfile();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(!!id);
@@ -116,7 +116,7 @@ const CreateListing = () => {
           .from('listing-images')
           .upload(filePath, file);
 
-        if (error) throw uploadError;
+        if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
           .from('listing-images')
@@ -182,7 +182,16 @@ const CreateListing = () => {
           .from('listings')
           .insert({ ...payload, rating: 0, review_count: 0, is_superhost: false });
         if (error) throw error;
-        toast.success("Listing published successfully!");
+
+        // Update profile to be a host
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ is_host: true })
+          .eq('id', user.id);
+
+        if (profileError) console.error("Failed to update host status:", profileError);
+
+        toast.success("Listing published successfully! You are now a host.");
       }
 
       navigate("/host/dashboard");
@@ -206,6 +215,46 @@ const CreateListing = () => {
 
   if (fetching) {
     return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  }
+
+  // Host Approval Check
+  if (user?.host_status !== 'approved') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="max-w-md text-center space-y-4">
+          <div className="mx-auto h-20 w-20 bg-muted rounded-full flex items-center justify-center">
+            {user?.host_status === 'pending' ? <Loader2 className="h-10 w-10 animate-spin text-primary" /> : <Home className="h-10 w-10 text-muted-foreground" />}
+          </div>
+          <h1 className="text-2xl font-black text-foreground">
+            {user?.host_status === 'pending' ? 'Application Pending' : 'Become a Host'}
+          </h1>
+          <p className="text-muted-foreground">
+            {user?.host_status === 'pending'
+              ? "Your host application is currently under review by our admin team. Check back soon!"
+              : "You need to be an approved host to list properties."}
+          </p>
+          {user?.host_status === 'none' || !user?.host_status ? (
+            <Button
+              onClick={async () => {
+                try {
+                  await updateProfile({ host_status: 'pending' });
+                  toast.success("Application submitted! Pending approval.");
+                } catch (e: any) {
+                  toast.error(`Failed to apply: ${e.message || "Unknown error"}`);
+                  console.error("Host Application Error:", e);
+                }
+              }}
+              className="w-full font-bold"
+            >
+              Apply to Host
+            </Button>
+          ) : null}
+          <Button variant="outline" onClick={() => navigate('/')} className="w-full font-bold">
+            Back to Home
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (

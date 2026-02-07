@@ -7,6 +7,8 @@ interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   is_host: boolean;
+  host_status: 'pending' | 'approved' | 'rejected' | 'none';
+  is_admin: boolean;
   updated_at: string | null;
 }
 
@@ -25,18 +27,22 @@ export function useProfile() {
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user && mounted) {
-          setUser({
+          // Initial user state from Auth (minimal)
+          const InitialUser: User = {
             id: user.id,
             email: user.email!,
             full_name: user.user_metadata.full_name || '',
             avatar_url: user.user_metadata.avatar_url,
-            is_host: false, // will be updated from profile
+            is_host: false,
+            host_status: 'none',
+            is_admin: false,
             created_at: user.created_at,
-          });
+          };
+          setUser(InitialUser);
 
           const { data, error } = await supabase
             .from('profiles')
-            .select('*')
+            .select('id, full_name, avatar_url, website, is_host, host_status, is_admin, updated_at')
             .eq('id', user.id)
             .single();
 
@@ -46,12 +52,14 @@ export function useProfile() {
 
           if (data && mounted) {
             setProfile(data);
-            // Update user object with profile data if available
+            // Update user object with profile data
             setUser(prev => prev ? ({
               ...prev,
               full_name: data.full_name || prev.full_name,
               avatar_url: data.avatar_url || prev.avatar_url,
               is_host: data.is_host,
+              host_status: data.host_status,
+              is_admin: data.is_admin,
             }) : null);
           }
         }
@@ -105,6 +113,8 @@ export function useProfile() {
           full_name: updates.full_name || null,
           avatar_url: updates.avatar_url || null,
           is_host: false,
+          host_status: 'none',
+          is_admin: false,
           updated_at: new Date().toISOString()
         };
       });

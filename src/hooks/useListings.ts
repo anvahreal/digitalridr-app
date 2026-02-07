@@ -34,7 +34,7 @@ export function useListings(): UseListingsReturn {
         async function fetchListings() {
             try {
                 setLoading(true);
-                let query = supabase.from('listings').select('*');
+                let query = supabase.from('listings').select('*').order('created_at', { ascending: false });
 
                 if (filters.location) {
                     query = query.ilike('location', `%${filters.location}%`);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +33,8 @@ const Auth = () => {
         });
         if (error) throw error;
         toast.success("Welcome back!");
-        navigate("/");
+        const returnTo = searchParams.get("returnTo");
+        navigate(returnTo || "/");
       } else {
         // SIGNUP logic
         const { error } = await supabase.auth.signUp({
@@ -46,8 +48,13 @@ const Auth = () => {
           },
         });
         if (error) throw error;
-        toast.success("Account created! You are now logged in.");
-        navigate("/");
+
+        // Success: Sign out immediately to force manual login
+        await supabase.auth.signOut();
+
+        toast.success("Account created successfully! Please log in to continue.");
+        setIsLogin(true); // Switch back to login form
+        setFormData(prev => ({ ...prev, password: "" })); // Clear password for security
       }
     } catch (error: any) {
       console.error(error);

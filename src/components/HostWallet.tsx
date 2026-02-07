@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,17 +35,30 @@ const HostWallet = () => {
     }
   };
 
+  // Fetch payouts to deduct from balance
+  const [payouts, setPayouts] = useState<any[]>([]);
+
+  useEffect(() => {
+    supabase.from('payout_requests').select('*').eq('user_id', supabase.auth.getUser().then(({ data }) => data.user?.id)).then(({ data }) => {
+      if (data) setPayouts(data);
+    });
+  }, []);
+
   // Calculate Stats
   const totalEarned = bookings
     .filter(b => b.status === 'completed' || b.status === 'confirmed')
     .reduce((sum, b) => sum + (b.total_price || 0), 0);
 
-  const pending = bookings
+  const pendingBookings = bookings
     .filter(b => b.status === 'pending')
     .reduce((sum, b) => sum + (b.total_price || 0), 0);
 
-  // Available Balance (simulation: 90% of earned is available, assuming 10% platform fee)
-  const availableBalance = totalEarned * 0.9;
+  const totalWithdrawn = payouts
+    .filter(p => p.status === 'paid' || p.status === 'pending') // Deduct both paid and pending requests
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  // Available Balance: (90% of Earnings) - (Withdrawals)
+  const availableBalance = (totalEarned * 0.9) - totalWithdrawn;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -62,7 +76,7 @@ const HostWallet = () => {
           </CardHeader>
           <CardContent>
             {loading ? <Loader2 className="animate-spin" /> : (
-              <div className="text-3xl font-black mb-1">{formatNaira(availableBalance)}</div>
+              <div className="text-3xl font-black mb-1">{formatNaira(Math.max(0, availableBalance))}</div>
             )}
             <p className="text-[10px] text-white/70 font-bold uppercase">Ready for withdrawal</p>
           </CardContent>
@@ -71,14 +85,14 @@ const HostWallet = () => {
         {/* Pending Card */}
         <Card className="rounded-[2.5rem] border-none shadow-sm bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Pending</CardTitle>
+            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Pending (Escrow/Payouts)</CardTitle>
             <Clock className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
             {loading ? <Loader2 className="animate-spin text-muted-foreground" /> : (
-              <div className="text-2xl font-black text-foreground">{formatNaira(pending)}</div>
+              <div className="text-2xl font-black text-foreground">{formatNaira(pendingBookings + totalWithdrawn)}</div>
             )}
-            <p className="text-[10px] text-muted-foreground mt-1 font-bold">Escrow processing</p>
+            <p className="text-[10px] text-muted-foreground mt-1 font-bold">Includes processing payouts</p>
           </CardContent>
         </Card>
 

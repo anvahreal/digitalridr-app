@@ -70,14 +70,22 @@ export function Header() {
 
         {/* Right Menu */}
         <div className="flex items-center gap-2 md:gap-4">
-          <Link to="/host" className="hidden lg:block">
-            <Button
-              variant="ghost"
-              className="rounded-full font-black text-foreground hover:bg-accent"
-            >
-              Become a Host
-            </Button>
-          </Link>
+          <div className="hidden lg:block">
+            {profile?.is_host ? (
+              <span className="text-sm font-bold text-muted-foreground cursor-default px-4 py-2 select-none" title="You are already a host">
+                You are a Host
+              </span>
+            ) : (
+              <Link to="/host">
+                <Button
+                  variant="ghost"
+                  className="rounded-full font-black text-foreground hover:bg-accent"
+                >
+                  Become a Host
+                </Button>
+              </Link>
+            )}
+          </div>
 
           <div className="hidden md:block">
             <ModeToggle />

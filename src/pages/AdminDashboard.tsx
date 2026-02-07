@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Header } from "@/components/Header";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
@@ -9,86 +9,74 @@ import {
     Building2,
     Wallet,
     MessageSquare,
-    ShieldAlert,
     Search,
     CheckCircle2,
-    XCircle,
-    MoreHorizontal,
+    Check,
+    X,
     LogOut,
     Ban,
     Menu,
-    Trash2,
+    Copy,
+    Mail,
     MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { formatNaira } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ModeToggle } from "@/components/ModeToggle";
 import {
-    Bar,
-    BarChart,
+    Area,
+    AreaChart,
     CartesianGrid,
     Cell,
-    Legend,
-    Line,
-    LineChart,
     Pie,
     PieChart,
     ResponsiveContainer,
     Tooltip,
     XAxis,
-    YAxis,
-    Area,
-    AreaChart
+    YAxis
 } from "recharts";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
-    const activeTabState = useState("overview");
-    const activeTab = activeTabState[0];
-    const setActiveTab = activeTabState[1];
+    const [activeTab, setActiveTab] = useState("overview");
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
 
     // Data States
+    const { user, loading: profileLoading } = useProfile();
     const [stats, setStats] = useState({ revenue: 0, hosts: 0, bookings: 0 });
     const [selectedHost, setSelectedHost] = useState<any>(null);
 
-    // Data States
     const [hosts, setHosts] = useState<any[]>([]);
     const [listings, setListings] = useState<any[]>([]);
     const [payouts, setPayouts] = useState<any[]>([]);
     const [bookings, setBookings] = useState<any[]>([]);
 
     useEffect(() => {
-        checkAdmin();
-    }, []);
-
-    const checkAdmin = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            navigate("/auth");
-            return;
+        if (!profileLoading) {
+            if (user?.is_admin) {
+                setIsAdmin(true);
+                fetchData();
+            } else {
+                toast.error("Unauthorized access: Admin only.");
+                navigate("/");
+            }
         }
-
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('is_admin')
-            .eq('id', user.id)
-            .single();
-
-        if (profile?.is_admin) {
-            setIsAdmin(true);
-            fetchData();
-        } else {
-            toast.error("Unauthorized access");
-            navigate("/");
-        }
-    };
+    }, [user, profileLoading]);
 
     const fetchData = async () => {
         try {
@@ -98,10 +86,10 @@ const AdminDashboard = () => {
                 { data: bookingsData },
                 { data: payout_requests }
             ] = await Promise.all([
-                supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-                supabase.from('listings').select('*, host:profiles(*)').order('created_at', { ascending: false }),
+                supabase.from('profiles').select('*').order('updated_at', { ascending: false }),
+                supabase.from('listings').select('*').order('created_at', { ascending: false }),
                 supabase.from('bookings').select('*').order('created_at', { ascending: false }),
-                supabase.from('payout_requests').select('*, user:profiles(*)').order('created_at', { ascending: false })
+                supabase.from('payout_requests').select('*').order('created_at', { ascending: false })
             ]);
 
             if (profiles) setHosts(profiles);
@@ -109,7 +97,7 @@ const AdminDashboard = () => {
             if (bookingsData) setBookings(bookingsData);
             if (payout_requests) setPayouts(payout_requests);
 
-            const totalRevenue = bookingsData?.reduce((acc, curr) => acc + (curr.total_price || 0), 0) || 0;
+            const totalRevenue = bookingsData?.reduce((acc: number, curr: any) => acc + (curr.total_price || 0), 0) || 0;
 
             setStats({
                 revenue: totalRevenue,
@@ -135,18 +123,34 @@ const AdminDashboard = () => {
         }
     };
 
-    const handlePayoutAction = async (id: string, status: string) => {
-        const { error } = await supabase.from('payout_requests').update({ status }).eq('id', id);
-        if (error) toast.error("Failed to update payout");
-        else {
-            toast.success(`Payout marked as ${status}`);
+    const handleUpdateHostStatus = async (hostId: string, status: 'approved' | 'rejected' | 'pending') => {
+        const { error } = await supabase.from('profiles').update({ host_status: status }).eq('id', hostId);
+        if (error) {
+            toast.error("Failed to update host status");
+        } else {
+            toast.success(`Host status updated to ${status}`);
             fetchData();
+        }
+    };
+
+    const handlePayoutAction = async (id: string, status: string) => {
+        // Optimistic Update
+        const originalPayouts = [...payouts];
+        setPayouts(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+
+        const { error } = await supabase.from('payout_requests').update({ status }).eq('id', id);
+        if (error) {
+            console.error("Payout Update Error:", error);
+            toast.error("Failed to update payout");
+            setPayouts(originalPayouts); // Revert on error
+        } else {
+            toast.success(`Payout marked as ${status}`);
         }
     };
 
     const handleDeleteListing = async (id: string) => {
         if (!confirm("Are you sure you want to delete this listing? This action cannot be undone.")) return;
-        const { error } = await supabase.from('properties').delete().eq('id', id);
+        const { error } = await supabase.from('listings').delete().eq('id', id);
         if (error) toast.error("Failed to delete listing");
         else {
             toast.success("Listing deleted successfully");
@@ -154,12 +158,50 @@ const AdminDashboard = () => {
         }
     };
 
-    if (loading) return <div className="flex h-screen items-center justify-center">Loading God Mode...</div>;
+    const seedTestListing = async () => {
+        setLoading(true);
+        try {
+            const userId = user?.id;
+            if (!userId) return;
+
+            // Seed Listing
+            await supabase.from('listings').insert({
+                host_id: userId,
+                title: 'Admin Test Penthouse',
+                description: 'A luxurious test apartment for admin debugging.',
+                price_per_night: 150000,
+                location: 'Eko Atlantic, Lagos',
+                images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800'],
+                amenities: ['Wifi', 'Pool', 'Gym'],
+                max_guests: 4
+            });
+
+            // Seed Payout Request
+            await supabase.from('payout_requests').insert({
+                user_id: userId,
+                amount: 50000,
+                status: 'pending',
+                bank_name: 'Access Bank',
+                account_number: '0001234567',
+                account_name: 'Admin Tester'
+            });
+
+            toast.success("Test data seeded! Refreshing...");
+            await fetchData();
+        } catch (e) {
+            toast.error("Failed to seed data");
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading || profileLoading) return <div className="flex h-screen items-center justify-center">Loading God Mode...</div>;
     if (!isAdmin) return null;
 
     return (
         <div className="min-h-screen bg-background text-foreground flex font-sans">
-            {/* ... Sidebar and other UI ... */}
+            {/* Sidebar */}
             <aside className="w-64 border-r border-border bg-card hidden md:flex flex-col">
                 <div className="p-6 border-b border-border">
                     <div className="flex items-center gap-2 text-[#F48221]">
@@ -182,7 +224,7 @@ const AdminDashboard = () => {
                 </div>
             </aside>
 
-            {/* Add the Sheet for Host Properties here, accessible to the scope */}
+            {/* Host Properties Sheet */}
             <Sheet open={!!selectedHost} onOpenChange={(open) => !open && setSelectedHost(null)}>
                 <SheetContent side="right" className="w-full sm:max-w-xl overflow-hidden p-0 border-l border-border bg-background shadow-2xl">
                     {selectedHost && (
@@ -266,25 +308,13 @@ const AdminDashboard = () => {
                                 </Button>
                             </SheetTrigger>
                             <SheetContent side="left" className="w-64 p-0 bg-card border-r border-border">
-                                <div className="p-6 border-b border-border">
-                                    <div className="flex items-center gap-2 text-[#F48221]">
-                                        <LayoutDashboard className="h-6 w-6" />
-                                        <span className="font-exhibit font-black text-xl tracking-tighter">GOD MODE</span>
-                                    </div>
-                                </div>
-                                <nav className="flex-1 p-4 space-y-2">
+                                <nav className="flex-1 p-4 space-y-2 mt-10">
                                     <MenuButton icon={LayoutDashboard} label="Overview" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
                                     <MenuButton icon={Users} label="Hosts & Users" active={activeTab === 'hosts'} onClick={() => setActiveTab('hosts')} />
                                     <MenuButton icon={Wallet} label="Payouts" active={activeTab === 'payouts'} onClick={() => setActiveTab('payouts')} />
                                     <MenuButton icon={MessageSquare} label="Messages" active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} />
                                     <MenuButton icon={Building2} label="Properties" active={activeTab === 'properties'} onClick={() => setActiveTab('properties')} />
                                 </nav>
-                                <div className="p-4 border-t border-border mt-auto">
-                                    <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-500/10 gap-3" onClick={() => navigate('/')}>
-                                        <LogOut size={18} />
-                                        Exit God Mode
-                                    </Button>
-                                </div>
                             </SheetContent>
                         </Sheet>
                         <h1 className="font-bold text-lg capitalize">{activeTab}</h1>
@@ -304,10 +334,20 @@ const AdminDashboard = () => {
                 <div className="p-4 md:p-8 max-w-7xl mx-auto">
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
 
-                        {/* OVERVIEW TAB - ANALYTICS DASHBOARD */}
+                        {/* OVERVIEW TAB */}
                         <TabsContent value="overview" className="space-y-6 animate-in fade-in">
-                            {/* 1. Top Stats Cards */}
-                            {/* 1. Top Stats Cards */}
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold">Performance Overview</h2>
+                                <Button
+                                    variant="outline"
+                                    className="gap-2 border-dashed border-emerald-500 text-emerald-500 hover:bg-emerald-500 hover:text-white"
+                                    onClick={seedTestListing}
+                                >
+                                    <CheckCircle2 size={16} />
+                                    Seed Test Data
+                                </Button>
+                            </div>
+
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <AnalyticsStatsCard
                                     title="Total Revenue"
@@ -343,9 +383,7 @@ const AdminDashboard = () => {
                                 />
                             </div>
 
-                            {/* 2. Charts Section */}
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                {/* Revenue Trend (Area Chart) */}
                                 <Card className="lg:col-span-2 bg-card border-border shadow-sm">
                                     <CardHeader>
                                         <CardTitle className="text-lg font-bold">Revenue Overview</CardTitle>
@@ -372,7 +410,6 @@ const AdminDashboard = () => {
                                     </CardContent>
                                 </Card>
 
-                                {/* Location Distribution (Donut Chart) */}
                                 <Card className="bg-card border-border shadow-sm">
                                     <CardHeader>
                                         <CardTitle className="text-lg font-bold">Properties by Location</CardTitle>
@@ -401,18 +438,13 @@ const AdminDashboard = () => {
                                                 <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: 'none', borderRadius: '8px' }} />
                                             </PieChart>
                                         </ResponsiveContainer>
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                            <span className="text-3xl font-black">{listings.length}</span>
-                                            <span className="text-xs text-muted-foreground uppercase tracking-widest">Properties</span>
-                                        </div>
                                     </CardContent>
                                 </Card>
                             </div>
 
-                            {/* 3. Recent Activity (Host Table) */}
                             <div className="space-y-4">
                                 <h3 className="text-lg font-bold">Recent Host Activity</h3>
-                                <HostTable hosts={hosts} onBan={handleBanHost} limit={5} onViewProperties={setSelectedHost} />
+                                <HostTable hosts={hosts} onBan={handleBanHost} onUpdateStatus={handleUpdateHostStatus} limit={5} onViewProperties={setSelectedHost} />
                             </div>
                         </TabsContent>
 
@@ -423,7 +455,7 @@ const AdminDashboard = () => {
                                     <CardTitle>All Hosts</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <HostTable hosts={hosts} onBan={handleBanHost} onViewProperties={setSelectedHost} />
+                                    <HostTable hosts={hosts} onBan={handleBanHost} onUpdateStatus={handleUpdateHostStatus} onViewProperties={setSelectedHost} />
                                 </CardContent>
                             </Card>
                         </TabsContent>
@@ -449,32 +481,35 @@ const AdminDashboard = () => {
                                             <tbody className="divide-y divide-border">
                                                 {payouts.length === 0 ? (
                                                     <tr><td colSpan={5} className="py-8 text-center text-muted-foreground">No pending payouts.</td></tr>
-                                                ) : payouts.map((p) => (
-                                                    <tr key={p.id} className="hover:bg-muted/50">
-                                                        <td className="py-4 pl-4 font-medium">{p.user?.full_name || "Unknown"}</td>
-                                                        <td className="py-4 font-bold text-emerald-400">{formatNaira(p.amount)}</td>
-                                                        <td className="py-4 text-sm text-muted-foreground">
-                                                            {p.bank_name} <br /> {p.account_number}
-                                                        </td>
-                                                        <td className="py-4">
-                                                            <Badge variant="outline" className={`
+                                                ) : payouts.map((p) => {
+                                                    const requestUser = hosts.find(h => h.id === p.user_id);
+                                                    return (
+                                                        <tr key={p.id} className="hover:bg-muted/50">
+                                                            <td className="py-4 pl-4 font-medium">{requestUser?.full_name || "Unknown"}</td>
+                                                            <td className="py-4 font-bold text-emerald-400">{formatNaira(p.amount)}</td>
+                                                            <td className="py-4 text-sm text-muted-foreground">
+                                                                {p.bank_name} <br /> {p.account_number}
+                                                            </td>
+                                                            <td className="py-4">
+                                                                <Badge variant="outline" className={`
                                                         ${p.status === 'paid' ? 'border-emerald-500 text-emerald-500' :
-                                                                    p.status === 'rejected' ? 'border-red-500 text-red-500' :
-                                                                        'border-amber-500 text-amber-500'}
+                                                                        p.status === 'rejected' ? 'border-red-500 text-red-500' :
+                                                                            'border-amber-500 text-amber-500'}
                                                       `}>
-                                                                {p.status}
-                                                            </Badge>
-                                                        </td>
-                                                        <td className="py-4 text-right pr-4 space-x-2">
-                                                            {p.status === 'pending' && (
-                                                                <>
-                                                                    <Button size="sm" variant="outline" className="h-7 border-emerald-500 text-emerald-500 hover:bg-emerald-500 hover:text-white" onClick={() => handlePayoutAction(p.id, 'paid')}>Pay</Button>
-                                                                    <Button size="sm" variant="outline" className="h-7 border-red-500 text-red-500 hover:bg-red-500 hover:text-white" onClick={() => handlePayoutAction(p.id, 'rejected')}>Reject</Button>
-                                                                </>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                                    {p.status}
+                                                                </Badge>
+                                                            </td>
+                                                            <td className="py-4 text-right pr-4 space-x-2">
+                                                                {p.status === 'pending' && (
+                                                                    <>
+                                                                        <Button size="sm" variant="outline" className="h-7 border-emerald-500 text-emerald-500 hover:bg-emerald-500 hover:text-white" onClick={() => handlePayoutAction(p.id, 'paid')}>Pay</Button>
+                                                                        <Button size="sm" variant="outline" className="h-7 border-red-500 text-red-500 hover:bg-red-500 hover:text-white" onClick={() => handlePayoutAction(p.id, 'rejected')}>Reject</Button>
+                                                                    </>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })}
                                             </tbody>
                                         </table>
                                     </div>
@@ -496,24 +531,70 @@ const AdminDashboard = () => {
                             </Card>
                         </TabsContent>
 
-                        {/* PROPERTIES TAB */}
+                        {/* PROPERTIES TAB (Grouped by Host) */}
                         <TabsContent value="properties" className="animate-in fade-in">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {listings.map((l) => (
-                                    <Card key={l.id} className="bg-card border-border overflow-hidden group">
-                                        <div className="h-40 bg-muted relative">
-                                            <img src={l.images[0]} alt="" className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" />
-                                        </div>
-                                        <CardContent className="p-4">
-                                            <h3 className="font-bold text-foreground truncate">{l.title}</h3>
-                                            <p className="text-sm text-muted-foreground">{l.host?.full_name}</p>
-                                            <div className="flex justify-between items-center mt-4">
-                                                <span className="font-mono text-[#F48221]">{formatNaira(l.price_per_night)}</span>
-                                                <Button variant="destructive" size="sm" className="h-7 text-xs" onClick={() => handleDeleteListing(l.id)}>Delete</Button>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                            <div className="space-y-8">
+                                {hosts.filter(h => listings.some(l => l.host_id === h.id)).map((host) => {
+                                    const hostListings = listings.filter(l => l.host_id === host.id);
+                                    return (
+                                        <Card key={host.id} className="bg-card border-border overflow-hidden">
+                                            <CardHeader className="bg-muted/20 border-b border-border pb-4">
+                                                <div className="flex items-center gap-4">
+                                                    <Avatar className="h-12 w-12 rounded-xl border-2 border-background shadow-sm">
+                                                        <AvatarImage src={host.avatar_url} className="object-cover" />
+                                                        <AvatarFallback className="font-bold bg-muted text-muted-foreground rounded-xl">
+                                                            {host.full_name?.[0]}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <CardTitle className="text-lg font-bold">{host.full_name}</CardTitle>
+                                                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">
+                                                            {hostListings.length} {hostListings.length === 1 ? 'Property' : 'Properties'} Listed
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent className="p-6">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    {hostListings.map((l) => (
+                                                        <div key={l.id} className="flex gap-4 p-3 rounded-2xl border border-border/50 bg-background hover:bg-muted/30 transition-all group/card">
+                                                            <div className="h-20 w-24 bg-muted rounded-xl bg-center bg-cover shrink-0 relative overflow-hidden">
+                                                                <img src={l.images?.[0]} className="w-full h-full object-cover" />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                                                                <div>
+                                                                    <h4 className="font-bold text-sm text-foreground truncate">{l.title}</h4>
+                                                                    <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1 mt-0.5 mb-2">
+                                                                        <MapPin className="h-3 w-3" /> {l.location}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="font-mono text-xs text-[#F48221] font-bold">{formatNaira(l.price_per_night)}</span>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="h-6 px-2 text-[10px] font-bold uppercase tracking-wider text-red-500 hover:bg-red-500/10 hover:text-red-600 rounded-lg"
+                                                                        onClick={() => handleDeleteListing(l.id)}
+                                                                    >
+                                                                        Delete
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                })}
+
+                                {listings.length === 0 && (
+                                    <div className="text-center py-20 bg-muted/20 rounded-[2.5rem] border border-dashed border-border/60">
+                                        <Building2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
+                                        <p className="font-bold text-muted-foreground">No properties listed.</p>
+                                        <Button variant="link" onClick={seedTestListing} className="text-[#F48221]">Seed Test Data</Button>
+                                    </div>
+                                )}
                             </div>
                         </TabsContent>
 
@@ -559,32 +640,7 @@ const AnalyticsStatsCard = ({ title, value, icon: Icon, trend, trendUp, color }:
     </Card>
 );
 
-const StatCard = ({ title, value, icon: Icon, color }: any) => (
-    <Card className="bg-card border-border">
-        <CardContent className="p-6 flex items-center justify-between">
-            <div>
-                <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">{title}</p>
-                <p className="text-3xl font-black text-foreground mt-2">{value}</p>
-            </div>
-            <div className={`h-12 w-12 rounded-full bg-muted flex items-center justify-center ${color}`}>
-                <Icon size={24} />
-            </div>
-        </CardContent>
-    </Card>
-);
-
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Copy, Mail } from "lucide-react";
-
-const HostTable = ({ hosts, onBan, limit, onViewProperties }: any) => {
+const HostTable = ({ hosts, onBan, onUpdateStatus, limit, onViewProperties }: any) => {
     const displayHosts = limit ? hosts.slice(0, limit) : hosts;
 
     return (
@@ -595,6 +651,7 @@ const HostTable = ({ hosts, onBan, limit, onViewProperties }: any) => {
                         <th className="p-5 font-black tracking-widest pl-6">Host / User</th>
                         <th className="p-5 font-black tracking-widest">Contact</th>
                         <th className="p-5 font-black tracking-widest">Status</th>
+                        <th className="p-5 font-black tracking-widest">Host Status</th>
                         <th className="p-5 font-black tracking-widest text-right pr-6">Joined Date</th>
                     </tr>
                 </thead>
@@ -628,6 +685,38 @@ const HostTable = ({ hosts, onBan, limit, onViewProperties }: any) => {
                                             </div>
                                         </div>
                                         <DropdownMenuSeparator className="bg-border/50 mx-2" />
+
+                                        {/* HOST APPROVAL ACTIONS */}
+                                        {h.host_status === 'pending' && (
+                                            <>
+                                                <DropdownMenuItem
+                                                    className="rounded-xl font-bold cursor-pointer py-2.5 px-3 focus:bg-emerald-500/10 focus:text-emerald-500 transition-colors group/item"
+                                                    onClick={() => onUpdateStatus(h.id, 'approved')}
+                                                >
+                                                    <Check className="mr-3 h-4 w-4 text-emerald-500" />
+                                                    Approve Application
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="rounded-xl font-bold cursor-pointer py-2.5 px-3 focus:bg-red-500/10 focus:text-red-500 transition-colors group/item"
+                                                    onClick={() => onUpdateStatus(h.id, 'rejected')}
+                                                >
+                                                    <X className="mr-3 h-4 w-4 text-red-500" />
+                                                    Reject Application
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator className="bg-border/50 mx-2" />
+                                            </>
+                                        )}
+
+                                        {h.host_status === 'approved' && !h.is_admin && (
+                                            <DropdownMenuItem
+                                                className="rounded-xl font-bold cursor-pointer py-2.5 px-3 focus:bg-amber-500/10 focus:text-amber-500 transition-colors group/item"
+                                                onClick={() => onUpdateStatus(h.id, 'rejected')}
+                                            >
+                                                <Ban className="mr-3 h-4 w-4 text-amber-500" />
+                                                Revoke Host Access
+                                            </DropdownMenuItem>
+                                        )}
+
                                         <DropdownMenuItem className="rounded-xl font-bold cursor-pointer py-2.5 px-3 focus:bg-accent focus:text-accent-foreground transition-colors group/item" onClick={() => onViewProperties(h)}>
                                             <Building2 className="mr-3 h-4 w-4 text-muted-foreground group-hover/item:text-foreground" />
                                             View Properties
@@ -644,10 +733,6 @@ const HostTable = ({ hosts, onBan, limit, onViewProperties }: any) => {
                                         <DropdownMenuItem className="rounded-xl font-bold cursor-pointer py-2.5 px-3 focus:bg-accent focus:text-accent-foreground transition-colors group/item" onClick={() => window.location.href = `mailto:${h.email}`}>
                                             <Mail className="mr-3 h-4 w-4 text-muted-foreground group-hover/item:text-foreground" />
                                             Send Email
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="rounded-xl font-bold cursor-pointer py-2.5 px-3 focus:bg-accent focus:text-accent-foreground transition-colors group/item">
-                                            <ShieldAlert className="mr-3 h-4 w-4 text-muted-foreground group-hover/item:text-foreground" />
-                                            View Profile
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator className="bg-border/50 mx-2" />
                                         <DropdownMenuItem
@@ -670,6 +755,18 @@ const HostTable = ({ hosts, onBan, limit, onViewProperties }: any) => {
                                         : 'bg-emerald-500/10 text-emerald-500'}
                                 `}>
                                     {h.banned ? 'Banned' : 'Active'}
+                                </Badge>
+                            </td>
+                            <td className="p-4 align-middle">
+                                <Badge variant="outline" className={`
+                                    rounded-lg px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider
+                                    ${h.host_status === 'approved' ? 'border-emerald-500/50 text-emerald-500 bg-emerald-500/5' :
+                                        h.host_status === 'pending' ? 'border-amber-500/50 text-amber-500 bg-amber-500/5' :
+                                            h.host_status === 'rejected' ? 'border-red-500/50 text-red-500 bg-red-500/5' :
+                                                'border-muted text-muted-foreground'
+                                    }
+                                `}>
+                                    {h.host_status || 'None'}
                                 </Badge>
                             </td>
                             <td className="p-4 pr-6 text-right align-middle">
