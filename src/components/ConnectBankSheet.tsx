@@ -1,20 +1,82 @@
-import { useState } from "react"; // For managing the steps (Step 1 vs Step 2)
-import { Landmark, CheckCircle, Building2, ChevronDown } from "lucide-react";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetTrigger 
+import { useState } from "react";
+import { Landmark, CheckCircle, Building2, ChevronDown, Loader2 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+import { useProfile } from "@/hooks/useProfile";
 
-export function ConnectBankSheet() {
+interface ConnectBankSheetProps {
+  onAccountConnected?: () => void;
+}
+
+export function ConnectBankSheet({ onAccountConnected }: ConnectBankSheetProps) {
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [bankName, setBankName] = useState("GTBank");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [open, setOpen] = useState(false);
+  const { profile } = useProfile();
+
+  const handleVerify = async () => {
+    if (accountNumber.length !== 10) {
+      toast.error("Account number must be 10 digits");
+      return;
+    }
+    setLoading(true);
+    // Simulate API verification delay
+    setTimeout(() => {
+      setAccountName((profile?.full_name || "GUEST USER").toUpperCase());
+      setStep(2);
+      setLoading(false);
+    }, 1500);
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase.from('payout_methods').insert({
+        user_id: user.id,
+        bank_name: bankName,
+        account_number: accountNumber,
+        account_name: accountName,
+        is_primary: true
+      });
+
+      if (error) throw error;
+
+      toast.success("Bank account connected successfully!");
+      setOpen(false);
+      if (onAccountConnected) onAccountConnected();
+
+      // Reset state after close
+      setTimeout(() => {
+        setStep(1);
+        setAccountNumber("");
+        setAccountName("");
+      }, 500);
+
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Failed to save bank account");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" className="rounded-2xl border-2 font-black">Add Bank Account</Button>
       </SheetTrigger>
@@ -32,21 +94,36 @@ export function ConnectBankSheet() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Select Bank</label>
-                <select className="w-full h-14 rounded-2xl bg-slate-50 border-none px-4 font-bold text-slate-900 focus:ring-2 ring-primary transition-all appearance-none">
+                <select
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  className="w-full h-14 rounded-2xl bg-slate-50 border-none px-4 font-bold text-slate-900 focus:ring-2 ring-primary transition-all appearance-none"
+                >
                   <option>GTBank</option>
                   <option>Zenith Bank</option>
                   <option>Access Bank</option>
                   <option>Kuda MFB</option>
+                  <option>UBA</option>
+                  <option>First Bank</option>
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Account Number</label>
-                <Input placeholder="0123456789" className="h-14 rounded-2xl bg-slate-50 border-none px-4 font-bold text-lg" />
+                <Input
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="0123456789"
+                  className="h-14 rounded-2xl bg-slate-50 border-none px-4 font-bold text-lg"
+                />
               </div>
             </div>
 
-            <Button onClick={() => setStep(2)} className="w-full h-14 rounded-2xl bg-slate-900 text-white font-black text-lg shadow-xl shadow-slate-200">
-              Verify Account
+            <Button
+              onClick={handleVerify}
+              disabled={loading || accountNumber.length < 10}
+              className="w-full h-14 rounded-2xl bg-slate-900 text-white font-black text-lg shadow-xl shadow-slate-200"
+            >
+              {loading ? <Loader2 className="animate-spin" /> : "Verify Account"}
             </Button>
           </div>
         ) : (
@@ -56,10 +133,18 @@ export function ConnectBankSheet() {
             </div>
             <div>
               <h2 className="text-2xl font-black text-slate-900">Account Verified!</h2>
-              <p className="font-bold text-slate-500 mt-2">CHIDI OKORO - GTBANK ****6789</p>
+              <p className="font-bold text-slate-500 mt-2">{accountName} - {bankName}</p>
+              <p className="text-sm text-slate-400 font-medium">****{accountNumber.slice(-4)}</p>
             </div>
-            <Button className="w-full h-14 rounded-2xl bg-slate-900 text-white font-black" onClick={() => {/* Close Sheet */}}>
-              Done
+            <Button
+              className="w-full h-14 rounded-2xl bg-slate-900 text-white font-black"
+              onClick={handleSave}
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="animate-spin" /> : "Confirm & Save"}
+            </Button>
+            <Button variant="ghost" className="font-bold text-slate-400" onClick={() => setStep(1)} disabled={loading}>
+              Back
             </Button>
           </div>
         )}

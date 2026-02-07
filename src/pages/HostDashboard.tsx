@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -6,21 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Home, MessageSquare, Wallet, Plus, Star, 
-  TrendingUp, Calendar, MapPin, Settings, 
+import {
+  Home, MessageSquare, Wallet, Plus, Star,
+  TrendingUp, Calendar, MapPin, Settings,
   ChevronRight, LayoutDashboard, AlertCircle, Menu, X, Camera, ShieldCheck
 } from "lucide-react";
 import { formatNaira } from "@/lib/utils";
+import { useHostBookings } from "@/hooks/useHostBookings";
+import { useListings } from "@/hooks/useListings";
+
 
 // Sub-Components
 import HostWallet from "@/components/HostWallet";
 import { ConnectBankSheet } from "@/components/ConnectBankSheet";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
+import { Landmark, Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 const HostDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [showSidebar, setShowSidebar] = useState(true);
+  const { user, profile, loading } = useProfile();
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -29,46 +40,120 @@ const HostDashboard = () => {
     }
   };
 
+  // --- BANKING & PAYOUTS STATE ---
+  const [payoutMethod, setPayoutMethod] = useState<any>(null);
+  const [isPayoutOpen, setIsPayoutOpen] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [payoutLoading, setPayoutLoading] = useState(false);
+
+  // Fetch saved payout method
+  const fetchPayoutMethod = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase.from('payout_methods').select('*').eq('user_id', user.id).maybeSingle();
+      setPayoutMethod(data);
+    }
+  };
+
+  useEffect(() => {
+    fetchPayoutMethod();
+  }, [activeTab]);
+
+  // Handle Payout Request
+  const handleRequestPayout = async () => {
+    if (!withdrawAmount || isNaN(Number(withdrawAmount)) || Number(withdrawAmount) < 1000) {
+      toast.error("Minimum withdrawal is ₦1,000");
+      return;
+    }
+    setPayoutLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase.from('payout_requests').insert({
+        user_id: user.id,
+        amount: Number(withdrawAmount),
+        status: 'pending',
+        bank_name: payoutMethod?.bank_name,
+        account_number: payoutMethod?.account_number,
+        account_name: payoutMethod?.account_name
+      });
+
+      if (error) throw error;
+
+      toast.success("Payout request submitted!");
+      setIsPayoutOpen(false);
+      setWithdrawAmount("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to request payout");
+    } finally {
+      setPayoutLoading(false);
+    }
+  };
+
+  const { bookings } = useHostBookings();
+  const { listings } = useListings();
+
+  // Calculate Real Stats
+  const totalRevenue = bookings
+    .filter(b => b.status === 'completed' || b.status === 'confirmed')
+    .reduce((sum, b) => sum + (b.total_price || 0), 0);
+
+  const activeStays = bookings.filter(b => {
+    const now = new Date();
+    // Use check_in/check_out as per DB schema, fallback to start_date if needed or ensuring consistency
+    const start = new Date(b.check_in || b.start_date);
+    const end = new Date(b.check_out || b.end_date);
+    return b.status === 'confirmed' && now >= start && now <= end;
+  }).length;
+
+  const myListingIds = user ? listings.filter(l => l.host_id === user.id).map(l => l.id) : [];
+  const myListings = user ? listings.filter(l => l.host_id === user.id) : [];
+
+  // Calculate average rating across all host's listings
+  const totalRating = myListings.reduce((sum, l) => sum + (l.rating || 0), 0);
+  const avgRating = myListings.length > 0 ? (totalRating / myListings.length).toFixed(1) : "0.0";
+
   const stats = [
-    { label: "Total Revenue", value: formatNaira(2450000), icon: Wallet, color: "text-emerald-600" },
-    { label: "Active Stays", value: "12", icon: Calendar, color: "text-blue-600" },
-    { label: "Avg Rating", value: "4.9", icon: Star, color: "text-amber-500" },
-    { label: "Response Rate", value: "98%", icon: TrendingUp, color: "text-purple-600" },
+    { label: "Total Revenue", value: formatNaira(totalRevenue), icon: Wallet, color: "text-emerald-600" },
+    { label: "Active Stays", value: activeStays.toString(), icon: Calendar, color: "text-blue-600" },
+    { label: "Avg Rating", value: avgRating, icon: Star, color: "text-amber-500" },
+    { label: "Review Count", value: myListings.reduce((sum, l) => sum + (l.review_count || 0), 0).toString(), icon: TrendingUp, color: "text-purple-600" },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50/50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      
+
       <main className="flex-1 py-4 lg:py-8">
-        <div className="container max-w-7xl px-0 md:px-6"> 
+        <div className="container max-w-7xl px-0 md:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-8">
-            
+
             {/* --- SIDEBAR (HOST HUB) --- */}
             <aside className={`${showSidebar ? 'block animate-in slide-in-from-left-4' : 'hidden'} lg:block lg:col-span-3 px-4 md:px-0`}>
               <div className="sticky top-24 space-y-6">
-                <Card className="border-none shadow-soft rounded-[2.5rem] p-4 bg-white">
+                <Card className="border-none shadow-sm rounded-[2.5rem] p-4 bg-card">
                   <div className="px-4 py-6 flex justify-between items-center">
                     <div>
-                      <h2 className="text-xl font-black text-slate-900 tracking-tight">Host Hub</h2>
-                      <p className="text-xs font-bold text-slate-400 uppercase mt-1 tracking-tighter">Lagos Luxury Mgmt</p>
+                      <h2 className="text-xl font-black text-foreground tracking-tight">Host Hub</h2>
+                      <p className="text-xs font-bold text-muted-foreground uppercase mt-1 tracking-tighter">Lagos Luxury Mgmt</p>
                     </div>
                     <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setShowSidebar(false)}>
                       <X className="h-5 w-5" />
                     </Button>
                   </div>
-                  
+
                   <nav className="space-y-1">
                     <NavButton icon={LayoutDashboard} label="Dashboard" active={activeTab === "overview"} onClick={() => handleTabChange("overview")} />
-                    <NavButton icon={MessageSquare} label="Messages" badge="3" onClick={() => navigate("/host/messages")} />
+                    <NavButton icon={MessageSquare} label="Messages" onClick={() => navigate("/host/messages")} />
                     <NavButton icon={Wallet} label="Earnings & Wallet" active={activeTab === "wallet"} onClick={() => handleTabChange("wallet")} />
                     <NavButton icon={Home} label="Manage Listings" active={activeTab === "listings"} onClick={() => handleTabChange("listings")} />
                     <NavButton icon={Settings} label="Profile Settings" active={activeTab === "profile"} onClick={() => handleTabChange("profile")} />
                   </nav>
 
-                  <hr className="my-6 border-slate-100" />
+                  <hr className="my-6 border-border" />
 
-                  <Button onClick={() => navigate("/host/create-listing")} className="w-full h-14 rounded-2xl bg-slate-900 text-white shadow-xl font-black gap-2">
+                  <Button onClick={() => navigate("/host/create-listing")} className="w-full h-14 rounded-2xl bg-primary text-primary-foreground shadow-xl font-black gap-2 hover:bg-primary/90">
                     <Plus className="h-5 w-5" /> New Listing
                   </Button>
                 </Card>
@@ -77,18 +162,18 @@ const HostDashboard = () => {
 
             {/* --- MAIN CONTENT AREA --- */}
             <div className={`${!showSidebar ? 'block animate-in slide-in-from-right-4' : 'hidden'} lg:block lg:col-span-9 px-4 md:px-0 space-y-6`}>
-              
+
               {/* Mobile Breadcrumb */}
               <div className="flex items-center gap-3 lg:hidden">
-                <Button variant="ghost" size="sm" className="font-black text-slate-400 p-0" onClick={() => setShowSidebar(true)}>
+                <Button variant="ghost" size="sm" className="font-black text-muted-foreground p-0" onClick={() => setShowSidebar(true)}>
                   <Menu className="h-5 w-5 mr-2" /> Menu
                 </Button>
-                <div className="h-4 w-[1px] bg-slate-200" />
-                <span className="text-[10px] font-black uppercase text-slate-900 tracking-widest">{activeTab}</span>
+                <div className="h-4 w-[1px] bg-border" />
+                <span className="text-[10px] font-black uppercase text-foreground tracking-widest">{activeTab}</span>
               </div>
 
               <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
-                <TabsList className="bg-transparent h-auto p-0 gap-8 flex-nowrap overflow-x-auto border-b border-slate-200 w-full justify-start rounded-none no-scrollbar">
+                <TabsList className="bg-transparent h-auto p-0 gap-8 flex-nowrap overflow-x-auto border-b border-border w-full justify-start rounded-none no-scrollbar">
                   <TabsTrigger value="overview" className="tab-premium">Overview</TabsTrigger>
                   <TabsTrigger value="listings" className="tab-premium">My Listings</TabsTrigger>
                   <TabsTrigger value="wallet" className="tab-premium">Wallet</TabsTrigger>
@@ -97,13 +182,13 @@ const HostDashboard = () => {
 
                 {/* --- OVERVIEW --- */}
                 <TabsContent value="overview" className="space-y-8 animate-in fade-in">
-                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {stats.map((s, i) => (
-                      <Card key={i} className="border-none shadow-sm rounded-[2rem] bg-white transition-transform active:scale-95">
+                      <Card key={i} className="border-none shadow-sm rounded-[2rem] bg-card transition-transform active:scale-95">
                         <CardContent className="p-6">
                           <s.icon className={`h-5 w-5 ${s.color} mb-3`} />
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{s.label}</p>
-                          <p className="text-xl font-black text-slate-900 mt-1">{s.value}</p>
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{s.label}</p>
+                          <p className="text-xl font-black text-foreground mt-1">{s.value}</p>
                         </CardContent>
                       </Card>
                     ))}
@@ -112,30 +197,68 @@ const HostDashboard = () => {
 
                 {/* --- MANAGE LISTINGS --- */}
                 <TabsContent value="listings" className="space-y-6 animate-in slide-in-from-bottom-4">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                    <div>
-                      <h2 className="text-3xl font-black text-slate-900 tracking-tight">My Listings</h2>
-                      <p className="text-slate-500 font-medium italic text-sm">You have 3 active properties</p>
-                    </div>
-                    <Button onClick={() => navigate("/host/create-listing")} className="w-full md:w-auto rounded-2xl bg-slate-900 text-white shadow-lg font-black h-12 px-8">
-                      <Plus className="mr-2 h-4 w-4" /> Add Property
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-1 gap-6">
-                    <ListingCard image="https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800" title="Luxurious Waterfront Ikoyi" location="Ikoyi, Lagos" price={85000} status="active" rating={4.9} reviews={24} />
-                    <ListingCard image="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800" title="Penthouse with City View" location="VI, Lagos" price={120000} status="active" rating={4.8} reviews={18} />
-                  </div>
+                  <HostListings user={user} />
                 </TabsContent>
 
                 {/* --- WALLET --- */}
                 <TabsContent value="wallet" className="space-y-8 animate-in slide-in-from-bottom-4">
                   <div className="flex justify-between items-end">
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight hidden md:block">Earnings</h2>
+                    <h2 className="text-3xl font-black text-foreground tracking-tight hidden md:block">Earnings</h2>
                     <div className="flex flex-col items-end gap-3 w-full md:w-auto">
-                      <ConnectBankSheet /> 
-                      <Button className="w-full md:w-auto rounded-2xl bg-slate-900 text-white shadow-xl font-black h-12 px-8">
-                        <Plus className="mr-2 h-4 w-4" /> Request Payout
-                      </Button>
+                      {payoutMethod ? (
+                        <div className="flex items-center gap-3 bg-card px-5 py-3 rounded-2xl shadow-sm border border-border cursor-pointer hover:shadow-md transition-all">
+                          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                            <Landmark size={18} className="text-foreground" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-[10px] font-black uppercase text-muted-foreground">{payoutMethod.bank_name}</p>
+                            <p className="text-sm font-bold text-foreground">****{payoutMethod.account_number.slice(-4)}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <ConnectBankSheet onAccountConnected={fetchPayoutMethod} />
+                      )}
+
+                      <Dialog open={isPayoutOpen} onOpenChange={setIsPayoutOpen}>
+                        <DialogTrigger asChild>
+                          <Button disabled={!payoutMethod} className="w-full md:w-auto rounded-2xl bg-foreground text-background shadow-xl font-black h-12 px-8 hover:bg-foreground/90">
+                            <Plus className="mr-2 h-4 w-4" /> Request Payout
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md rounded-[2rem] p-8 border-none bg-card">
+                          <DialogHeader>
+                            <DialogTitle className="text-2xl font-black text-foreground">Request Withdrawal</DialogTitle>
+                            <DialogDescription className="font-medium text-muted-foreground">
+                              Funds will be sent to your connected {payoutMethod?.bank_name} account.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Amount (₦)</label>
+                              <Input
+                                type="number"
+                                placeholder="50000"
+                                className="h-14 rounded-2xl bg-muted border-none font-black text-lg px-4 text-foreground"
+                                value={withdrawAmount}
+                                onChange={(e) => setWithdrawAmount(e.target.value)}
+                              />
+                            </div>
+                            <div className="bg-emerald-500/10 p-4 rounded-xl flex items-start gap-3 border border-emerald-500/20">
+                              <div className="h-5 w-5 bg-emerald-500/20 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                                <Plus size={12} className="text-emerald-600 dark:text-emerald-400" />
+                              </div>
+                              <p className="text-xs font-bold text-emerald-800 dark:text-emerald-200 leading-tight">
+                                Platform fees (5%) will be deducted automatically. Net amount will be processed within 24 hours.
+                              </p>
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button onClick={handleRequestPayout} disabled={payoutLoading || !withdrawAmount} className="w-full h-14 rounded-2xl bg-foreground text-background font-black text-lg hover:bg-foreground/90">
+                              {payoutLoading ? <Loader2 className="animate-spin" /> : "Confirm Payout"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
                   <HostWallet />
@@ -145,27 +268,38 @@ const HostDashboard = () => {
                 <TabsContent value="profile" className="space-y-8 animate-in slide-in-from-right-4">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                     <div>
-                      <h2 className="text-3xl font-black text-slate-900 tracking-tight">Profile</h2>
-                      <p className="text-slate-500 font-medium italic text-sm">Manage account preferences</p>
+                      <h2 className="text-3xl font-black text-foreground tracking-tight">Profile</h2>
+                      <p className="text-muted-foreground font-medium italic text-sm">Manage account preferences</p>
                     </div>
-                    <Button className="w-full md:w-auto rounded-2xl bg-[#FF7A00] text-white shadow-lg font-black h-12 px-10">Save Changes</Button>
+                    <Button className="w-full md:w-auto rounded-2xl bg-primary text-primary-foreground shadow-lg font-black h-12 px-10 hover:bg-primary/90">Save Changes</Button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <Card className="border-none shadow-soft rounded-[2.5rem] p-8 bg-white text-center h-fit">
+                    <Card className="border-none shadow-sm rounded-[2.5rem] p-8 bg-card text-center h-fit">
                       <div className="relative w-32 h-32 mx-auto mb-4">
-                        <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400" className="w-full h-full rounded-[2.5rem] object-cover border-4 border-slate-50 shadow-sm" alt="Profile" />
-                        <Button size="icon" className="absolute -bottom-1 -right-1 rounded-xl bg-slate-900 h-9 w-9 border-4 border-white"><Camera className="h-4 w-4 text-white" /></Button>
+                        <img
+                          src={profile?.avatar_url || "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400"}
+                          className="w-full h-full rounded-[2.5rem] object-cover border-4 border-muted shadow-sm"
+                          alt="Profile"
+                        />
+                        <Button size="icon" className="absolute -bottom-1 -right-1 rounded-xl bg-foreground h-9 w-9 border-4 border-card">
+                          <Camera className="h-4 w-4 text-background" />
+                        </Button>
                       </div>
-                      <h3 className="font-black text-slate-900 text-lg">Chinwe Obi</h3>
+                      <h3 className="font-black text-foreground text-lg">
+                        {loading ? "Loading..." : (profile?.full_name || user?.email || "Host")}
+                      </h3>
                     </Card>
                     <div className="md:col-span-2 space-y-6">
-                      <Card className="border-none shadow-soft rounded-[2.5rem] p-8 bg-white">
+                      <Card className="border-none shadow-sm rounded-[2.5rem] p-8 bg-card">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                          <ProfileInput label="Full Name" defaultValue="Chinwe Obi" />
-                          <ProfileInput label="Email" defaultValue="chinwe@lagosluxury.com" />
+                          <ProfileInput label="Full Name" defaultValue={profile?.full_name || ""} />
+                          <ProfileInput label="Email" defaultValue={user?.email || ""} />
                           <div className="md:col-span-2 space-y-2">
-                            <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Bio</label>
-                            <textarea className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-[#FF7A00]/20 min-h-[100px] resize-none" defaultValue="Luxury host in VI." />
+                            <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Bio</label>
+                            <textarea
+                              className="w-full bg-muted border-none rounded-2xl p-4 font-bold text-foreground focus:ring-2 focus:ring-primary/20 min-h-[100px] resize-none"
+                              defaultValue="Luxury host in VI."
+                            />
                           </div>
                         </div>
                       </Card>
@@ -183,8 +317,8 @@ const HostDashboard = () => {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .tab-premium {
-          @apply px-1 py-4 font-black text-slate-400 rounded-none transition-all border-b-2 border-transparent 
-          data-[state=active]:border-slate-900 data-[state=active]:text-slate-900 bg-transparent shadow-none;
+          @apply px-1 py-4 font-black text-muted-foreground rounded-none transition-all border-b-2 border-transparent 
+          data-[state=active]:border-foreground data-[state=active]:text-foreground bg-transparent shadow-none;
         }
       `}</style>
     </div>
@@ -193,52 +327,111 @@ const HostDashboard = () => {
 
 // --- HELPER COMPONENTS ---
 
-const ListingCard = ({ image, title, location, price, status, rating, reviews }: any) => (
-  <Card className="border-none shadow-soft rounded-[2.5rem] overflow-hidden bg-white group transition-all">
-    <div className="flex flex-col md:flex-row">
-      <div className="relative w-full md:w-64 h-48 md:h-auto overflow-hidden">
-        <img src={image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={title} />
-        <Badge className={`absolute top-4 left-4 border-none font-black uppercase text-[8px] ${status === 'active' ? 'bg-emerald-500 text-white' : 'bg-slate-400 text-white'}`}>{status}</Badge>
-      </div>
-      <div className="flex-1 p-6 flex flex-col justify-between">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-lg font-black text-slate-900 leading-tight">{title}</h3>
-            <p className="text-slate-400 font-bold text-[10px] flex items-center gap-1 mt-1 uppercase tracking-tighter"><MapPin className="h-3 w-3" /> {location}</p>
+const ListingCard = ({ id, image, title, location, price, status, rating, reviews }: any) => {
+  const navigate = useNavigate();
+  return (
+    <Card className="border-none shadow-sm rounded-[2.5rem] overflow-hidden bg-card group transition-all">
+      <div className="flex flex-col md:flex-row">
+        <Dialog>
+          <DialogTrigger asChild>
+            <div className="relative w-full sm:w-40 h-48 sm:h-40 shrink-0 overflow-hidden cursor-zoom-in group/image">
+              <img src={image} className="w-full h-full object-cover group-hover/image:scale-105 transition-transform duration-500" alt={title} />
+              <Badge className={`absolute top-4 left-4 border-none font-black uppercase text-[8px] ${status === 'active' ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'}`}>{status}</Badge>
+              <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/10 transition-colors" />
+            </div>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl w-full p-0 overflow-hidden bg-transparent border-none shadow-none">
+            <img src={image} className="w-full h-auto rounded-lg shadow-2xl" alt="Full view" />
+          </DialogContent>
+        </Dialog>
+        <div className="flex-1 p-6 flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="text-lg font-black text-foreground leading-tight">{title}</h3>
+              <p className="text-muted-foreground font-bold text-[10px] flex items-center gap-1 mt-1 uppercase tracking-tighter"><MapPin className="h-3 w-3" /> {location}</p>
+            </div>
+            <p className="text-lg font-black text-foreground">{formatNaira(price)}</p>
           </div>
-          <p className="text-lg font-black text-slate-900">{formatNaira(price)}</p>
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+            <div className="flex items-center gap-1">
+              <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+              <span className="text-xs font-black text-foreground">{rating}</span>
+              <span className="text-[10px] font-bold text-muted-foreground">({reviews} reviews)</span>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate(`/host/edit-listing/${id}`)} variant="outline" className="rounded-xl font-black text-[10px] h-8 px-4 border-2 hover:bg-accent text-foreground">Edit</Button>
+              <Button variant="ghost" size="icon" className="rounded-xl bg-muted h-8 w-8 text-foreground"><ChevronRight className="h-4 w-4" /></Button>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50">
-          <div className="flex items-center gap-1">
-            <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
-            <span className="text-xs font-black text-slate-900">{rating}</span>
-            <span className="text-[10px] font-bold text-slate-400">({reviews} reviews)</span>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="rounded-xl font-black text-[10px] h-8 px-4 border-2">Edit</Button>
-            <Button variant="ghost" size="icon" className="rounded-xl bg-slate-50 h-8 w-8"><ChevronRight className="h-4 w-4" /></Button>
-          </div>
-        </div>
       </div>
-    </div>
-  </Card>
-);
+    </Card>
+  )
+};
 
 const ProfileInput = ({ label, defaultValue }: { label: string, defaultValue: string }) => (
   <div className="space-y-2">
-    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">{label}</label>
-    <input type="text" defaultValue={defaultValue} className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 font-bold text-slate-900 focus:ring-2 focus:ring-[#FF7A00]/20 transition-all text-sm" />
+    <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">{label}</label>
+    <input type="text" defaultValue={defaultValue} className="w-full h-12 bg-muted border-none rounded-2xl px-5 font-bold text-foreground focus:ring-2 focus:ring-primary/20 transition-all text-sm" />
   </div>
 );
 
 const NavButton = ({ icon: Icon, label, active, onClick, badge }: any) => (
-  <button onClick={onClick} className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold transition-all ${active ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:bg-slate-50"}`}>
+  <button onClick={onClick} className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold transition-all ${active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50"}`}>
     <div className="flex items-center gap-3">
-      <Icon className={`h-5 w-5 ${active ? "text-slate-900" : "text-slate-400"}`} />
+      <Icon className={`h-5 w-5 ${active ? "text-foreground" : "text-muted-foreground"}`} />
       <span className="text-sm tracking-tight">{label}</span>
     </div>
     {badge && <Badge className="bg-[#FF7A00] text-white border-none text-[10px]">{badge}</Badge>}
   </button>
 );
+
+
+
+const HostListings = ({ user }: { user: any }) => {
+  const navigate = useNavigate();
+  const { listings, loading } = useListings();
+
+  // Filter by logged-in user ID
+  const myListings = user ? listings.filter(l => l.host_id === user.id) : [];
+
+  return (
+    <>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+          <h2 className="text-3xl font-black text-foreground tracking-tight">My Listings</h2>
+          <p className="text-muted-foreground font-medium italic text-sm">You have {myListings.length} properties</p>
+        </div>
+        <Button onClick={() => navigate("/host/create-listing")} className="w-full md:w-auto rounded-2xl bg-foreground text-background shadow-lg font-black h-12 px-8 hover:bg-foreground/90">
+          <Plus className="mr-2 h-4 w-4" /> Add Property
+        </Button>
+      </div>
+      <div className="grid grid-cols-1 gap-6">
+        {loading ? (
+          <p className="text-muted-foreground font-bold">Loading your listings...</p>
+        ) : myListings.length > 0 ? (
+          myListings.map(l => (
+            <ListingCard
+              key={l.id}
+              id={l.id}
+              image={l.images[0] || "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800"}
+              title={l.title}
+              location={l.location}
+              price={l.price_per_night}
+              status="active" // Default for now
+              rating={l.rating || 0}
+              reviews={l.review_count || 0}
+            />
+          ))
+        ) : (
+          <div className="text-center py-12 bg-card rounded-[2.5rem] shadow-sm border border-border">
+            <p className="text-foreground font-black text-lg">No listings yet</p>
+            <p className="text-muted-foreground font-medium text-sm mt-1">Start your hosting journey today.</p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
 
 export default HostDashboard;

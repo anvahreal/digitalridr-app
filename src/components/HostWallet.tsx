@@ -1,27 +1,57 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Wallet, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Clock, 
-  CheckCircle2 
+import {
+  Wallet,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Clock,
+  CheckCircle2,
+  Loader2
 } from "lucide-react";
+import { useHostBookings } from "@/hooks/useHostBookings";
+import { formatNaira } from "@/lib/utils";
 
-// Mock Data remains internal to the component
-const transactions = [
-  { id: "TX1024", type: "credit", amount: 145000, description: "Booking: Chidi Okoro (3 Nights)", status: "available", date: "Jan 28, 2024" },
-  { id: "TX1025", type: "credit", amount: 88000, description: "Booking: Fatima Yusuf (2 Nights)", status: "pending", date: "Jan 30, 2024" },
-  { id: "TX1026", type: "debit", amount: 200000, description: "Withdrawal to GTBank (****4421)", status: "completed", date: "Jan 25, 2024" },
-];
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 const HostWallet = () => {
+  const { bookings, loading, refetch } = useHostBookings();
+
+  const handleAction = async (bookingId: string, status: 'confirmed' | 'cancelled') => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+
+      toast.success(`Booking ${status}`);
+      refetch(); // Refresh list
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update booking");
+    }
+  };
+
+  // Calculate Stats
+  const totalEarned = bookings
+    .filter(b => b.status === 'completed' || b.status === 'confirmed')
+    .reduce((sum, b) => sum + (b.total_price || 0), 0);
+
+  const pending = bookings
+    .filter(b => b.status === 'pending')
+    .reduce((sum, b) => sum + (b.total_price || 0), 0);
+
+  // Available Balance (simulation: 90% of earned is available, assuming 10% platform fee)
+  const availableBalance = totalEarned * 0.9;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Main Balance */}
-        <Card className="bg-[#FF7A00] text-white border-none shadow-xl shadow-orange-100 rounded-[2.5rem] overflow-hidden relative">
+        <Card className="bg-[#FF7A00] text-white border-none shadow-xl rounded-[2.5rem] overflow-hidden relative">
           <div className="absolute right-[-20px] top-[-20px] opacity-10">
             <Wallet size={120} />
           </div>
@@ -31,64 +61,95 @@ const HostWallet = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black mb-1">₦450,500.00</div>
+            {loading ? <Loader2 className="animate-spin" /> : (
+              <div className="text-3xl font-black mb-1">{formatNaira(availableBalance)}</div>
+            )}
             <p className="text-[10px] text-white/70 font-bold uppercase">Ready for withdrawal</p>
           </CardContent>
         </Card>
 
         {/* Pending Card */}
-        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white">
+        <Card className="rounded-[2.5rem] border-none shadow-sm bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</CardTitle>
+            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Pending</CardTitle>
             <Clock className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-slate-900">₦88,000</div>
-            <p className="text-[10px] text-slate-400 mt-1 font-bold">Escrow processing</p>
+            {loading ? <Loader2 className="animate-spin text-muted-foreground" /> : (
+              <div className="text-2xl font-black text-foreground">{formatNaira(pending)}</div>
+            )}
+            <p className="text-[10px] text-muted-foreground mt-1 font-bold">Escrow processing</p>
           </CardContent>
         </Card>
 
         {/* Total Earned Card */}
-        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white">
+        <Card className="rounded-[2.5rem] border-none shadow-sm bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Earned</CardTitle>
+            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Earned</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-slate-900">₦2,450,000</div>
-            <p className="text-[10px] text-slate-400 mt-1 font-bold">Net earnings</p>
+            {loading ? <Loader2 className="animate-spin text-muted-foreground" /> : (
+              <div className="text-2xl font-black text-foreground">{formatNaira(totalEarned)}</div>
+            )}
+            <p className="text-[10px] text-muted-foreground mt-1 font-bold">Gross earnings</p>
           </CardContent>
         </Card>
       </div>
 
       {/* TRANSACTION LIST */}
-      <Card className="rounded-[2.5rem] border-none shadow-sm overflow-hidden bg-white">
-        <div className="p-6 border-b">
-          <h3 className="font-black text-lg text-slate-900">Recent Activity</h3>
+      <Card className="rounded-[2.5rem] border-none shadow-sm overflow-hidden bg-card">
+        <div className="p-6 border-b border-border">
+          <h3 className="font-black text-lg text-foreground">Recent Activity</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <tbody className="divide-y divide-slate-50">
-              {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-slate-50/50 transition-colors">
+            <tbody className="divide-y divide-border">
+              {loading ? (
+                <tr><td colSpan={2} className="p-6 text-center text-muted-foreground">Loading transactions...</td></tr>
+              ) : bookings.length === 0 ? (
+                <tr><td colSpan={2} className="p-6 text-center text-muted-foreground">No transactions yet.</td></tr>
+              ) : bookings.map((tx: any) => (
+                <tr key={tx.id} className="hover:bg-accent/50 transition-colors">
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${tx.type === "credit" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
-                        {tx.type === "credit" ? <ArrowDownLeft size={14} /> : <ArrowUpRight size={14} />}
+                      <div className={`p-2 rounded-full ${tx.status === "confirmed" || tx.status === "completed" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}`}>
+                        {tx.status === "confirmed" || tx.status === "completed" ? <ArrowDownLeft size={14} /> : <Clock size={14} />}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-800">{tx.description}</p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">{tx.date}</p>
+                        <p className="text-sm font-bold text-foreground">Booking: {tx.listing?.title || "Unknown Listing"}</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase">{new Date(tx.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-5 text-right">
-                    <p className={`font-black text-sm ${tx.type === "credit" ? "text-emerald-600" : "text-slate-900"}`}>
-                      {tx.type === "credit" ? "+" : "-"}₦{tx.amount.toLocaleString()}
-                    </p>
-                    <Badge variant="outline" className="rounded-full border-none bg-slate-50 text-[8px] font-black uppercase">
-                      {tx.status}
-                    </Badge>
+                  <td className="px-6 py-5">
+                    <div className="flex justify-end items-center gap-2">
+                      <p className={`font-black text-sm ${tx.status === "confirmed" || tx.status === "completed" ? "text-emerald-600" : "text-foreground"}`}>
+                        +{formatNaira(tx.total_price)}
+                      </p>
+                      <Badge variant="outline" className={`rounded-full border-none text-[8px] font-black uppercase ${tx.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-700' :
+                        tx.status === 'pending' ? 'bg-amber-500/10 text-amber-700' :
+                          'bg-muted text-muted-foreground'
+                        }`}>
+                        {tx.status}
+                      </Badge>
+                    </div>
+                    {tx.status === 'pending' && (
+                      <div className="flex justify-end gap-2 mt-2">
+                        <button
+                          onClick={() => handleAction(tx.id, 'confirmed')}
+                          className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold rounded-full transition-colors"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => handleAction(tx.id, 'cancelled')}
+                          className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold rounded-full transition-colors"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

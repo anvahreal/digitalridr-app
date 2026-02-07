@@ -40,7 +40,7 @@ export function ListingCard({ listing, className }: ListingCardProps) {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image Carousel */}
-      <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-muted">
         <img
           src={listing.images[currentImage]}
           alt={listing.title}
@@ -68,13 +68,13 @@ export function ListingCard({ listing, className }: ListingCardProps) {
           <>
             <button
               onClick={prevImage}
-              className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white hover:scale-105"
+              className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white hover:scale-105 dark:bg-black/60 dark:text-white dark:hover:bg-black/80"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               onClick={nextImage}
-              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white hover:scale-105"
+              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white hover:scale-105 dark:bg-black/60 dark:text-white dark:hover:bg-black/80"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -100,7 +100,7 @@ export function ListingCard({ listing, className }: ListingCardProps) {
 
         {/* Superhost badge */}
         {listing.is_superhost && (
-          <div className="absolute left-3 top-3 rounded-md bg-white px-2 py-1 text-xs font-semibold shadow-sm">
+          <div className="absolute left-3 top-3 rounded-md bg-white/90 px-2 py-1 text-xs font-bold shadow-sm backdrop-blur-sm dark:bg-black/60 dark:text-white">
             Superhost
           </div>
         )}

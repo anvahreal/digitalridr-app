@@ -26,13 +26,13 @@ export function SearchBar({ variant = "hero", className }: SearchBarProps) {
     if (checkIn) params.set("checkIn", checkIn.toISOString());
     if (checkOut) params.set("checkOut", checkOut.toISOString());
     if (guests > 1) params.set("guests", guests.toString());
-    
+
     navigate(`/search?${params.toString()}`);
   };
 
   const isHero = variant === "hero";
 
-return (
+  return (
     <div
       className={cn(
         "w-full transition-all duration-300",
@@ -61,7 +61,7 @@ return (
                 placeholder="Search destinations"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full bg-transparent text-sm font-medium text-foreground placeholder:text-slate-400 focus:outline-none"
+                className="w-full bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
             </button>
           </PopoverTrigger>
@@ -69,10 +69,10 @@ return (
         </Popover>
 
         {/* Mobile Divider */}
-        <div className="sm:hidden border-t border-slate-100 mx-4" />
+        <div className="sm:hidden border-t border-border mx-4" />
 
         {/* Check-in & Check-out: SIDE BY SIDE ON MOBILE */}
-        <div className="flex sm:contents border-b sm:border-none border-slate-100">
+        <div className="flex sm:contents border-b sm:border-none border-border">
           <Popover open={activeTab === "checkIn"} onOpenChange={(open) => setActiveTab(open ? "checkIn" : null)}>
             <PopoverTrigger asChild>
               <button
@@ -81,8 +81,8 @@ return (
                   activeTab === "checkIn" && "bg-secondary"
                 )}
               >
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Check-in</span>
-                <span className={cn("text-xs font-bold", checkIn ? "text-foreground" : "text-slate-400")}>
+                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Check-in</span>
+                <span className={cn("text-xs font-bold", checkIn ? "text-foreground" : "text-muted-foreground")}>
                   {checkIn ? format(checkIn, "MMM d") : "Add dates"}
                 </span>
               </button>
@@ -90,7 +90,7 @@ return (
             {/* ... (Calendar content stays same) */}
           </Popover>
 
-          <div className="h-8 w-px bg-slate-100 self-center" />
+          <div className="h-8 w-px bg-border self-center" />
 
           <Popover open={activeTab === "checkOut"} onOpenChange={(open) => setActiveTab(open ? "checkOut" : null)}>
             <PopoverTrigger asChild>
@@ -100,8 +100,8 @@ return (
                   activeTab === "checkOut" && "bg-secondary"
                 )}
               >
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Check-out</span>
-                <span className={cn("text-xs font-bold", checkOut ? "text-foreground" : "text-slate-400")}>
+                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Check-out</span>
+                <span className={cn("text-xs font-bold", checkOut ? "text-foreground" : "text-muted-foreground")}>
                   {checkOut ? format(checkOut, "MMM d") : "Add dates"}
                 </span>
               </button>
@@ -123,8 +123,8 @@ return (
                   activeTab === "guests" && "bg-secondary"
                 )}
               >
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Who</span>
-                <span className={cn("text-xs font-bold", guests > 1 ? "text-foreground" : "text-slate-400")}>
+                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Who</span>
+                <span className={cn("text-xs font-bold", guests > 1 ? "text-foreground" : "text-muted-foreground")}>
                   {guests > 1 ? `${guests} guests` : "Add guests"}
                 </span>
               </button>

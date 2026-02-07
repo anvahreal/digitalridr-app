@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Mail, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -22,29 +23,44 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    toast.success(isLogin ? "Welcome back!" : "Account created successfully!");
-    setIsLoading(false);
-
-    // LOGIC: If the email contains "host", take them to the dashboard
-    // This is a temporary "bypass" for your testing
-    if (formData.email.includes("host")) {
-      navigate("/host/dashboard"); // Make sure this route matches your App.tsx
-    } else {
-      navigate("/");
+    try {
+      if (isLogin) {
+        // LOGIN logic
+        const { error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+        if (error) throw error;
+        toast.success("Welcome back!");
+        navigate("/");
+      } else {
+        // SIGNUP logic
+        const { error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              first_name: formData.fullName.split(" ")[0] || "User",
+              last_name: formData.fullName.split(" ").slice(1).join(" ") || "",
+            },
+          },
+        });
+        if (error) throw error;
+        toast.success("Account created! You are now logged in.");
+        navigate("/");
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Something went wrong");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSocialLogin = (provider: string) => {
     toast.info(`${provider} login will be available soon!`);
-    // In production, this would handle OAuth flow
-    // For now, simulate successful login
-    setTimeout(() => {
-      toast.success(`Logged in with ${provider}!`);
-      navigate("/");
-    }, 2000);
+    // In production, this would handle Supabase OAuth:
+    // supabase.auth.signInWithOAuth({ provider: 'google' })
   };
 
   return (
@@ -244,17 +260,6 @@ const Auth = () => {
                 {isLogin ? "Sign up" : "Log in"}
               </button>
             </p>
-          </div>
-          {/* Dev Bypass Button - Remove before production */}
-          <div className="mt-4 pt-4 border-t border-dashed border-border">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full text-[10px] text-muted-foreground uppercase tracking-widest"
-              onClick={() => navigate("/host/dashboard")}
-            >
-              Skip to Host Dashboard (Dev Only)
-            </Button>
           </div>
 
           <p className="mt-6 text-center text-xs text-muted-foreground">

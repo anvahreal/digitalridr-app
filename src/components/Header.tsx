@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Search, Menu, User, Globe } from "lucide-react";
+import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/lib/supabase";
+import { Search, Menu, User, Globe, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -11,9 +13,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { ModeToggle } from "@/components/ModeToggle";
+
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const { user, profile } = useProfile();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,35 +31,34 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-        isScrolled
-          ? "bg-white/95 backdrop-blur-md shadow-md py-2"
-          : "bg-white py-4"
-      }`}
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ${isScrolled
+        ? "bg-background/95 backdrop-blur-md shadow-md py-2"
+        : "bg-background py-4"
+        }`}
     >
       <div className="container mx-auto flex items-center justify-between px-4">
         {/* Logo Section */}
-        <Link to="/" className="flex items-center">
-          <img
-            src="/assets/digitalridr-logo.PNG"
-            alt="Digital Ridr"
-            className={cn(
-              "object-contain transition-all duration-300",
-              "h-10 md:h-14",
-              "w-auto",
-              "ml-0",
-            )}
-          />
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="relative flex items-center justify-center">
+            <MapPin className="h-8 w-8 text-[#F48221] fill-[#F48221] group-hover:scale-110 transition-transform" />
+            <div className="h-3 w-3 bg-white rounded-full absolute top-[7px] left-[10px]" />
+          </div>
+          <div className="flex flex-col -space-y-1.5">
+            <span className="font-black text-xl md:text-2xl tracking-tighter text-[#00AEEF]">
+              Digital<span className="text-[#F48221]">Ridr</span>
+            </span>
+            <span className="text-[7px] font-extrabold tracking-[0.3em] text-[#F48221] uppercase text-right w-full pr-0.5">Apartments</span>
+          </div>
         </Link>
 
         {!location.pathname.includes("/host") && (
           <div className="hidden md:flex items-center">
-            <button className="flex items-center gap-4 rounded-full border border-slate-200 bg-white px-6 py-2.5 shadow-sm hover:shadow-md transition-all">
-              <span className="font-bold text-sm text-slate-900">Anywhere</span>
-              <span className="h-4 w-px bg-slate-200" />
-              <span className="font-bold text-sm text-slate-900">Any week</span>
-              <span className="h-4 w-px bg-slate-200" />
-              <span className="text-slate-400 text-sm font-medium">
+            <button className="flex items-center gap-4 rounded-full border border-border bg-card px-6 py-2.5 shadow-sm hover:shadow-md transition-all">
+              <span className="font-bold text-sm text-foreground">Anywhere</span>
+              <span className="h-4 w-px bg-border" />
+              <span className="font-bold text-sm text-foreground">Any week</span>
+              <span className="h-4 w-px bg-border" />
+              <span className="text-muted-foreground text-sm font-medium">
                 Add guests
               </span>
               <div className="ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#F48221] text-white">
@@ -69,16 +73,20 @@ export function Header() {
           <Link to="/host" className="hidden lg:block">
             <Button
               variant="ghost"
-              className="rounded-full font-black text-slate-700 hover:bg-slate-50"
+              className="rounded-full font-black text-foreground hover:bg-accent"
             >
               Become a Host
             </Button>
           </Link>
 
+          <div className="hidden md:block">
+            <ModeToggle />
+          </div>
+
           <Button
             variant="ghost"
             size="icon"
-            className="hidden md:flex rounded-full text-slate-600"
+            className="hidden md:flex rounded-full text-muted-foreground"
           >
             <Globe className="h-5 w-5" />
           </Button>
@@ -87,46 +95,88 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="flex items-center gap-3 rounded-full border-slate-200 pl-3 pr-1 py-1 h-12 hover:shadow-md transition-all bg-white"
+                className="flex items-center gap-3 rounded-full border-border pl-3 pr-1 py-1 h-12 hover:shadow-md transition-all bg-background"
               >
-                <Menu className="h-4 w-4 text-slate-600" />
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900">
-                  <User className="h-5 w-5 text-white" />
+                <Menu className="h-4 w-4 text-foreground" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted overflow-hidden">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="h-5 w-5 text-muted-foreground" />
+                  )}
                 </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-64 rounded-2xl p-2 shadow-xl border-slate-100 mt-2"
+              className="w-64 rounded-2xl p-2 shadow-xl border-border mt-2 bg-card text-card-foreground"
             >
+              {!user ? (
+                <>
+                  <DropdownMenuItem
+                    asChild
+                    className="rounded-xl focus:bg-accent focus:text-accent-foreground cursor-pointer"
+                  >
+                    <Link to="/auth" className="font-black py-2">
+                      Sign up
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    asChild
+                    className="rounded-xl focus:bg-accent focus:text-accent-foreground cursor-pointer"
+                  >
+                    <Link to="/auth" className="py-2 font-medium">
+                      Log in
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem
+                    asChild
+                    className="rounded-xl focus:bg-accent focus:text-accent-foreground cursor-pointer"
+                  >
+                    <Link to="/dashboard" className="font-black py-2">
+                      My Trips
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    asChild
+                    className="rounded-xl focus:bg-accent focus:text-accent-foreground cursor-pointer"
+                  >
+                    <Link to="/host/dashboard" className="py-2 font-medium">
+                      Host Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+              <DropdownMenuSeparator className="my-2 bg-border" />
               <DropdownMenuItem
                 asChild
-                className="rounded-xl focus:bg-slate-50"
-              >
-                <Link to="/auth" className="font-black py-2">
-                  Sign up
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                asChild
-                className="rounded-xl focus:bg-slate-50"
-              >
-                <Link to="/auth" className="py-2 font-medium">
-                  Log in
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="my-2" />
-              <DropdownMenuItem
-                asChild
-                className="rounded-xl focus:bg-slate-50"
+                className="rounded-xl focus:bg-accent focus:text-accent-foreground cursor-pointer"
               >
                 <Link to="/host" className="py-2">
                   Host your home
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="rounded-xl focus:bg-slate-50 py-2">
+              <DropdownMenuItem className="rounded-xl focus:bg-accent focus:text-accent-foreground py-2 cursor-pointer">
                 Help Center
               </DropdownMenuItem>
+              <div className="md:hidden">
+                <DropdownMenuSeparator className="my-2 bg-border" />
+                <div className="p-2 flex items-center justify-between">
+                  <span className="text-sm font-medium">Theme</span>
+                  <ModeToggle />
+                </div>
+              </div>
+              {user && (
+                <DropdownMenuItem
+                  className="rounded-xl focus:bg-red-50 focus:text-red-600 py-2 text-red-500 font-bold cursor-pointer"
+                  onClick={() => supabase.auth.signOut()}
+                >
+                  Log out
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

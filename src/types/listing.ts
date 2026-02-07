@@ -32,6 +32,7 @@ export interface SearchFilters {
   priceMax: number;
   bedrooms: number;
   propertyType: string;
+  amenities?: string[];
 }
 
 export interface Booking {
