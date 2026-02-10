@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { formatNaira } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ModeToggle } from "@/components/ModeToggle";
 import {
     Area,
@@ -194,6 +195,12 @@ const AdminDashboard = () => {
             {/* Host Properties Sheet */}
             <Sheet open={!!selectedHost} onOpenChange={(open) => !open && setSelectedHost(null)}>
                 <SheetContent side="right" className="w-full sm:max-w-xl overflow-hidden p-0 border-l border-border bg-background shadow-2xl">
+                    <div className="sr-only">
+                        <DialogTitle>Host Properties</DialogTitle>
+                        <DialogDescription>
+                            View and manage properties listed by this host
+                        </DialogDescription>
+                    </div>
                     {selectedHost && (
                         <div className="flex flex-col h-full bg-background">
                             <div className="p-8 border-b border-border bg-muted/10">

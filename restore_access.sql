@@ -1,24 +1,25 @@
 -- RESTORE ADMIN & HOST ACCESS
--- Run this script in the Supabase SQL Editor if you get logged out or your profile is missing.
+-- Run this script in the Supabase SQL Editor to make 'marvellouskayode17@gmail.com' an admin.
 
--- 1. Create or Update your Profile
-insert into public.profiles (id, full_name, avatar_url, host_status, is_host, is_admin, updated_at)
-select 
+INSERT INTO public.profiles (id, full_name, avatar_url, host_status, is_host, is_admin, updated_at)
+SELECT 
   id, 
-  coalesce(raw_user_meta_data->>'full_name', email), 
-  coalesce(raw_user_meta_data->>'avatar_url', ''), 
+  COALESCE(raw_user_meta_data->>'full_name', email), 
+  COALESCE(raw_user_meta_data->>'avatar_url', ''), 
   'approved', -- Automatically approve host status
   true,       -- Set is_host to true
-  true,       -- Restore Admin status
+  true,       -- Set is_admin to true
   now()
-from auth.users
-where id = auth.uid() -- Only for the current logged-in user running this script
-on conflict (id) do update
-set 
+FROM auth.users
+WHERE email = 'marvellouskayode17@gmail.com' -- Target specific email
+ON CONFLICT (id) DO UPDATE
+SET 
   host_status = 'approved',
   is_host = true,
   is_admin = true,
   updated_at = now();
 
--- 2. Verify it worked (Optional)
-select id, email, is_admin, host_status from public.profiles where id = auth.uid();
+-- 2. Verify it worked
+select id, username, full_name, is_admin, host_status 
+from public.profiles 
+where id = (select id from auth.users where email = 'marvellouskayode17@gmail.com');

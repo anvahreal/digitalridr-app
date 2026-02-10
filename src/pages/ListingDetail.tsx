@@ -60,6 +60,7 @@ const ListingDetail = () => {
   const [checkOut, setCheckOut] = useState<Date>();
   const [guests, setGuests] = useState(1);
   const [currentImage, setCurrentImage] = useState(0);
+  const [showMap, setShowMap] = useState(false);
 
   const isLiked = listing ? isFavorite(listing.id) : false;
 
@@ -161,6 +162,7 @@ const ListingDetail = () => {
                   <span className="underline">{listing.location}</span>
                 </div>
               </div>
+
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" className="rounded-full hover:bg-accent" onClick={handleShare}>
                   <Share className="mr-2 h-4 w-4" /> Share
@@ -175,6 +177,32 @@ const ListingDetail = () => {
                   {isLiked ? "Saved" : "Save"}
                 </Button>
               </div>
+            </div>
+
+            {/* Map Toggle & Preview */}
+            <div className="mt-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMap(!showMap)}
+                className="text-muted-foreground hover:text-foreground text-xs h-8 px-2"
+              >
+                <MapPin className="mr-2 h-3.5 w-3.5" />
+                {showMap ? "Hide Map" : "Show Map"}
+              </Button>
+
+              {showMap && (listing.address || listing.location) && (
+                <div className="w-full mt-2 h-64 rounded-2xl overflow-hidden border border-border animate-in fade-in-0 slide-in-from-top-2 duration-300">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(`${listing.address || ''}, ${listing.location || ''}, Lagos, Nigeria`)}&output=embed`}
+                    title="Location"
+                    className="w-full h-full border-0"
+                    loading="lazy"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -419,9 +447,9 @@ const ListingDetail = () => {
             </div>
           </div>
         </div>
-      </main>
+      </main >
       <Footer />
-    </div>
+    </div >
   );
 };
 

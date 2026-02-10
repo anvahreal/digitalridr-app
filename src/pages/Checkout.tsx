@@ -102,13 +102,35 @@ const Checkout = () => {
 
   if (!user) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4">
-        <h1 className="text-2xl font-bold text-slate-900">Please Log In</h1>
-        <p className="text-slate-500">You need to be logged in to complete your booking.</p>
-        <Button onClick={() => {
-          const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-          navigate(`/auth?returnTo=${returnUrl}`);
-        }}>Log In / Sign Up</Button>
+      <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background animate-in fade-in duration-500">
+        <div className="w-full max-w-sm text-center space-y-6">
+          <div className="h-20 w-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-6 inanimate-in zoom-in duration-500 delay-150">
+            <Shield className="h-10 w-10 text-primary" />
+          </div>
+          <div className="space-y-2 animate-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-backwards">
+            <h1 className="text-3xl font-black tracking-tight text-foreground">Login Required</h1>
+            <p className="text-muted-foreground font-medium">Please sign in or create an account to secure your booking.</p>
+          </div>
+          <div className="pt-4 animate-in slide-in-from-bottom-8 duration-700 delay-500 fill-mode-backwards">
+            <Button
+              size="lg"
+              className="w-full h-14 text-lg font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all"
+              onClick={() => {
+                const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                navigate(`/auth?returnTo=${returnUrl}`);
+              }}
+            >
+              Log In / Sign Up
+            </Button>
+            <Button
+              variant="ghost"
+              className="mt-4 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground"
+              onClick={() => navigate("/")}
+            >
+              Back to Home
+            </Button>
+          </div>
+        </div>
       </div>
     )
   }

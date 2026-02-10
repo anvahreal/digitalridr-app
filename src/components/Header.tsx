@@ -91,14 +91,6 @@ export function Header() {
             <ModeToggle />
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hidden md:flex rounded-full text-muted-foreground"
-          >
-            <Globe className="h-5 w-5" />
-          </Button>
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

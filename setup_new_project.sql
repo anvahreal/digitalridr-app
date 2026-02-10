@@ -5,12 +5,17 @@
 -- It combines the Master Schema, Fixes, and Policies.
 
 -- ==============================================================================
--- PART 0: CLEANUP (Optional - Uncomment if re-running)
--- ==============================================================================
--- ==============================================================================
 -- PART 0: CLEANUP (SAFE MODE - No Drop Tables)
 -- ==============================================================================
--- The destructive DROP TABLE commands have been removed to prevent data loss.
+-- WARN: THESE COMMANDS WILL WIPE YOUR DATABASE. ONLY UNCOMMENT IF YOU WANT TO RESET EVERYTHING.
+-- DROP TABLE IF EXISTS public.messages CASCADE;
+-- DROP TABLE IF EXISTS public.conversations CASCADE;
+-- DROP TABLE IF EXISTS public.bookings CASCADE;
+-- DROP TABLE IF EXISTS public.listings CASCADE;
+-- DROP TABLE IF EXISTS public.payout_requests CASCADE;
+-- DROP TABLE IF EXISTS public.payout_methods CASCADE;
+-- DROP TABLE IF EXISTS public.favorites CASCADE;
+-- DROP TABLE IF EXISTS public.profiles CASCADE;
 
 -- ==============================================================================
 -- PART 1: MASTER SCHEMA (Tables)
@@ -33,20 +38,24 @@ create table if not exists public.profiles (
 alter table public.profiles enable row level security;
 
 -- Admin Policy: Admins can update any profile (to approve hosts)
+drop policy if exists "Admins can update any profile" on public.profiles;
 create policy "Admins can update any profile" on public.profiles 
   for update using ( 
     (select is_admin from public.profiles where id = auth.uid()) = true 
   );
 
 -- User Policy: Users can update their own profile
+drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can update own profile" on public.profiles 
   for update using ( auth.uid() = id );
 
 -- User Policy: Users can see all profiles (for simple social features, or limit to needed)
+drop policy if exists "Users can view all profiles" on public.profiles;
 create policy "Users can view all profiles" on public.profiles
   for select using ( true );
 
 -- User Policy: Users can insert their own profile
+drop policy if exists "Users can insert own profile" on public.profiles;
 create policy "Users can insert own profile" on public.profiles 
   for insert with check ( auth.uid() = id );
 
@@ -70,6 +79,7 @@ create table if not exists public.listings (
   latitude numeric,
   longitude numeric,
   video_url text, -- Added for Virtual Tour
+  address text, -- Added for Location
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   rating numeric default 0,
   review_count integer default 0
@@ -289,3 +299,7 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Comment on columns
+COMMENT ON COLUMN public.listings.video_url IS 'URL for YouTube virtual tour video';
+COMMENT ON COLUMN public.listings.address IS 'Specific street address for the listing (e.g. 123 Admiralty Way)';

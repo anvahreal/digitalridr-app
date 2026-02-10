@@ -6,11 +6,32 @@ import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/lib/supabase";
 import {
   ChevronLeft, Camera, MapPin, Search,
-  CheckCircle2, Plus, Minus, Home, Sparkles, Loader2, X
+  CheckCircle2, Plus, Minus, Home, Sparkles, Loader2, X, Play, Video
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatNaira } from "@/lib/utils";
 import { AMENITIES } from "@/constants/amenities";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+
+const LAGOS_DISTRICTS = [
+  "Abule Egba", "Agidingbi", "Agege", "Ajah", "Akoka", "Alagbado", "Alapere", "Alausa", "Alimosho",
+  "Amuwo Odofin", "Anthony Village", "Apapa", "Badagry", "Banana Island", "Bariga", "Berger",
+  "Bode Thomas", "Costain", "Dolphin Estate", "Ebute Metta", "Egbeda", "Eko Atlantic", "Epe",
+  "Festac Town", "Gbagada", "Gowon Estate", "Ibeju Lekki", "Idimu", "Igando", "Ikeja GRA",
+  "Ikorodu", "Ikotun", "Ikoyi", "Ilupeju", "Ipaja", "Isolo", "Iyana Ipaja",
+  "Jakande", "Jibowu", "Ketu", "Lagos Island", "Lekki Phase 1", "Lekki Phase 2",
+  "Magodo", "Maryland", "Mile 2", "Mushin", "Obalende", "Ogba", "Ogudu", "Ojo",
+  "Ojodu", "Ojota", "Okota", "Omole Phase 1", "Omole Phase 2", "Onikan", "Onipanu", "Opebi",
+  "Oshodi", "Palmgrove", "Raji Oba", "Sangotedo", "Satellite Town", "Shomolu", "Surulere",
+  "Victoria Garden City (VGC)", "Victoria Island (VI)", "Yaba"
+].sort();
 
 const CreateListing = () => {
   const navigate = useNavigate();
@@ -27,21 +48,17 @@ const CreateListing = () => {
   const [formData, setFormData] = useState({
     title: "",
     location: "",
+    address: "", // Specific street address
     price: "",
     bedrooms: 1,
     bathrooms: 1,
     guests: 2,
     amenities: [] as string[],
-    amenities: [] as string[],
     images: [] as string[], // Stores public URLs
     video_url: "",
   });
 
-  const [locationSearch, setLocationSearch] = useState("");
   const [uploading, setUploading] = useState(false);
-
-  const locations = ["Ikoyi", "Victoria Island", "Lekki Phase 1", "Lekki Phase 2", "Ajah", "Ikeja GRA", "Magodo", "Yaba", "Surulere"];
-  const filteredLocations = locations.filter(l => l.toLowerCase().includes(locationSearch.toLowerCase()));
 
   // Fetch data if editing
   useEffect(() => {
@@ -61,11 +78,11 @@ const CreateListing = () => {
           setFormData({
             title: data.title,
             location: data.location,
+            address: data.address || "",
             price: data.price_per_night.toString(),
             bedrooms: data.bedrooms,
             bathrooms: data.bathrooms,
             guests: data.max_guests,
-            amenities: data.amenities || [],
             amenities: data.amenities || [],
             images: data.images || [],
             video_url: data.video_url || ""
@@ -151,8 +168,8 @@ const CreateListing = () => {
       toast.error("You must be logged in to host.");
       return;
     }
-    if (!formData.title || !formData.location || !formData.price || formData.images.length === 0) {
-      toast.error("Please fill in all required fields and upload at least one photo.");
+    if (!formData.title || !formData.location || !formData.address || !formData.price || formData.images.length === 0) {
+      toast.error("Please fill in all required fields (Address included) and upload at least one photo.");
       return;
     }
 
@@ -163,18 +180,17 @@ const CreateListing = () => {
       const payload = {
         title: formData.title,
         location: formData.location,
+        address: formData.address,
         price_per_night: priceValue,
         bedrooms: formData.bedrooms,
         bathrooms: formData.bathrooms,
         max_guests: formData.guests,
         amenities: formData.amenities,
         images: formData.images,
-        host_id: user.id,
-        city: "Lagos",
-        host_id: user.id,
         city: "Lagos",
         country: "Nigeria",
         video_url: formData.video_url,
+        host_id: user.id,
       };
 
       if (isEditMode) {
@@ -305,37 +321,51 @@ const CreateListing = () => {
                 />
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Search District</label>
-                  <div className="relative z-50">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="text"
-                      placeholder={formData.location || "Search Lagos districts..."}
-                      value={locationSearch}
-                      onChange={(e) => setLocationSearch(e.target.value)}
-                      className="w-full h-14 bg-muted border-none rounded-2xl pl-11 pr-4 font-bold text-foreground focus:ring-2 focus:ring-primary/20 transition-all text-sm placeholder:text-muted-foreground"
-                    />
-                    {locationSearch && (
-                      <div className="bg-card rounded-2xl p-2 mt-2 border border-border max-h-40 overflow-y-auto shadow-2xl absolute w-full top-full left-0 z-50">
-                        {filteredLocations.map(loc => (
-                          <button
-                            key={loc}
-                            onClick={() => {
-                              handleInputChange("location", loc);
-                              setLocationSearch("");
-                            }}
-                            className="w-full text-left p-3 hover:bg-muted rounded-xl text-sm font-bold text-foreground transition-colors"
-                          >
-                            {loc}
-                          </button>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">About this place</label>
+                  <Textarea
+                    placeholder="Describe your property..."
+                    className="min-h-[120px] bg-muted border-none rounded-2xl p-4 font-medium text-foreground resize-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                    value={formData.description}
+                    onChange={(e: any) => handleInputChange("description", e.target.value)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">District</label>
+                    <Select
+                      value={formData.location}
+                      onValueChange={(val) => handleInputChange("location", val)}
+                    >
+                      <SelectTrigger className="w-full h-14 bg-muted border-none rounded-2xl px-4 font-bold text-foreground">
+                        <SelectValue placeholder="Select District" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LAGOS_DISTRICTS.map((dict) => (
+                          <SelectItem key={dict} value={dict} className="font-medium">{dict}</SelectItem>
                         ))}
-                      </div>
-                    )}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  {formData.location && (
-                    <div className="flex items-center gap-2 mt-2 px-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <span className="font-bold text-sm text-foreground">{formData.location}</span>
+
+                  <FormInput
+                    label="Street Address"
+                    placeholder="e.g. 10 Admiralty Way"
+                    value={formData.address}
+                    onChange={(e: any) => handleInputChange("address", e.target.value)}
+                  />
+
+                  {/* Map Preview */}
+                  {(formData.address || formData.location) && (
+                    <div className="aspect-video w-full rounded-2xl overflow-hidden bg-muted border border-border mt-2">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(`${formData.address || ''}, ${formData.location || ''}, Lagos, Nigeria`)}&output=embed`}
+                        title="Location Preview"
+                        className="w-full h-full border-0"
+                        loading="lazy"
+                      />
                     </div>
                   )}
                 </div>
@@ -385,7 +415,6 @@ const CreateListing = () => {
           {step === 3 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <header>
-                <h1 className="text-3xl font-black text-foreground tracking-tighter">Visuals</h1>
                 <h1 className="text-3xl font-black text-foreground tracking-tighter">Visuals & Tour</h1>
                 <p className="text-muted-foreground font-medium text-sm">Upload photos and add a virtual tour.</p>
               </header>
@@ -425,16 +454,29 @@ const CreateListing = () => {
                 </div>
               )}
 
-              <div className="pt-6 border-t border-border">
+              <div className="pt-6 border-t border-border space-y-4">
                 <FormInput
-                  label="Virtual Tour URL (YouTube)"
+                  label="Virtual Tour URL (YouTube Only)"
                   placeholder="https://www.youtube.com/watch?v=..."
                   value={formData.video_url}
                   onChange={(e: any) => handleInputChange("video_url", e.target.value)}
                 />
-                <p className="text-[10px] text-muted-foreground mt-2 ml-1">
-                  Paste a YouTube link to show a virtual tour of your property.
-                </p>
+
+                {/* Concierge Video Upload */}
+                <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-emerald-800">Have a video file instead?</p>
+                    <p className="text-[10px] text-emerald-600 mt-0.5">Send it to us via WhatsApp and we'll upload it for you.</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-white hover:bg-emerald-100 border-emerald-200 text-emerald-700 h-9 rounded-xl gap-2 shadow-sm"
+                    onClick={() => window.open(`https://wa.me/2348000000000?text=${encodeURIComponent(`Hello DigitalRidr, I have a video tour for my listing "${formData.title || 'Untitled'}" that I'd like to upload.`)}`, '_blank')}
+                  >
+                    <Video className="h-4 w-4" /> Send Video
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -477,7 +519,7 @@ const CreateListing = () => {
 const FormInput = ({ label, placeholder, type = "text", value, onChange }: any) => (
   <div className="space-y-2">
     <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">{label}</label>
-    <input
+    <Input
       type={type}
       placeholder={placeholder}
       value={value}
