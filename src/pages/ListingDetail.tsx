@@ -31,6 +31,13 @@ import { format, differenceInDays } from "date-fns";
 import { cn, formatNaira } from "@/lib/utils";
 import { toast } from "sonner";
 
+const getYoutubeId = (url: string) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
 const amenityIcons: Record<string, any> = {
   WiFi: Wifi,
   Parking: Car,
@@ -267,6 +274,25 @@ const ListingDetail = () => {
                   )}
                 </div>
               </div>
+
+              {/* Virtual Tour Section */}
+              {listing.video_url && getYoutubeId(listing.video_url) && (
+                <div className="border-b pb-8">
+                  <h3 className="mb-6 text-xl font-semibold">Virtual Tour</h3>
+                  <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-muted">
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      src={`https://www.youtube.com/embed/${getYoutubeId(listing.video_url)}`}
+                      title="Virtual Tour"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="absolute inset-0"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Unique Selling Points */}
               <div className="space-y-6 border-b pb-8 text-muted-foreground">

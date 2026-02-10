@@ -216,110 +216,59 @@ const UserDashboard = () => {
                       {bookingsLoading ? <div className="text-muted-foreground">Loading...</div> : bookings
                         .filter((b) => b.status === "confirmed" || b.status === "pending")
                         .map((booking) => (
-                          <Card
+                          <div
                             key={booking.id}
-                            className="border-none shadow-sm hover:shadow-md transition-shadow rounded-3xl overflow-hidden bg-card group"
+                            onClick={() => { setSelectedBooking(booking); setActionType('manage'); }}
+                            className="group flex gap-4 cursor-pointer border-b border-border/40 pb-6 last:border-0 last:pb-0 hover:bg-muted/20 -mx-4 px-4 py-4 sm:mx-0 sm:px-0 sm:py-0 sm:hover:bg-transparent transition-colors"
                           >
-                            <CardContent className="p-0 flex flex-col md:flex-row">
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <div className="relative w-full md:w-64 h-56 md:h-auto shrink-0 overflow-hidden cursor-zoom-in group/image">
-                                    <img
-                                      src={booking.listings?.images?.[0] || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"}
-                                      className="h-full w-full object-cover group-hover/image:scale-110 transition-transform duration-700"
-                                      alt=""
-                                    />
-                                    <div className="absolute top-4 left-4 pointer-events-none">
-                                      {getStatusBadge(booking.status)}
-                                    </div>
-                                    <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/10 transition-colors" />
-                                  </div>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-4xl w-full p-0 overflow-hidden bg-transparent border-none shadow-none">
-                                  <img
-                                    src={booking.listings?.images?.[0] || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"}
-                                    className="w-full h-auto rounded-lg shadow-2xl"
-                                    alt="Full view"
-                                  />
-                                </DialogContent>
-                              </Dialog>
+                            {/* Image */}
+                            <div className="relative h-24 w-24 sm:h-40 sm:w-64 shrink-0 overflow-hidden rounded-xl bg-muted">
+                              <img
+                                src={booking.listings?.images?.[0] || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"}
+                                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                alt=""
+                              />
+                              <div className="absolute top-2 left-2">
+                                {getStatusBadge(booking.status)}
+                              </div>
+                            </div>
 
-                              <div className="flex-1 p-6 flex flex-col justify-between">
-                                <div>
-                                  <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                      <h3 className="font-bold text-lg text-foreground group-hover:text-[#F48221] transition-colors mb-1 line-clamp-1">
-                                        {booking.listings?.title || "Unknown Listing"}
-                                      </h3>
-                                      <div className="flex items-center gap-1 text-muted-foreground">
-                                        <MapPin className="h-3 w-3" />
-                                        <span className="text-xs font-medium">
-                                          {booking.listings?.location || "Unknown Location"}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <p className="text-lg font-black text-foreground whitespace-nowrap">
-                                      {formatNaira(booking.total_price)}
+                            {/* Content */}
+                            <div className="flex-1 py-1 flex flex-col justify-between">
+                              <div>
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h3 className="font-bold text-foreground text-sm sm:text-lg mb-1">
+                                      {booking.listings?.location?.split(',')[0] || "Unknown Location"}
+                                    </h3>
+                                    <p className="text-muted-foreground text-xs sm:text-sm line-clamp-1 mb-1">
+                                      {booking.listings?.title}
                                     </p>
                                   </div>
+                                  <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {format(new Date(booking.check_in), "MMM d")} - {format(new Date(booking.check_out), "MMM d")} • {booking.guests} guests
+                                </p>
+                              </div>
 
-                                  <div className="flex items-center gap-6 py-4 px-5 bg-muted/40 rounded-2xl border border-border/50">
-                                    <div>
-                                      <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">
-                                        Check-in
-                                      </p>
-                                      <p className="text-sm font-bold text-foreground">
-                                        {format(new Date(booking.check_in), "MMM d")}
-                                      </p>
-                                    </div>
-                                    <div className="h-8 w-px bg-border/60" />
-                                    <div>
-                                      <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">
-                                        Check-out
-                                      </p>
-                                      <p className="text-sm font-bold text-foreground">
-                                        {format(new Date(booking.check_out), "MMM d")}
-                                      </p>
-                                    </div>
-                                    <div className="h-8 w-px bg-border/60" />
-                                    <div>
-                                      <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">
-                                        Guests
-                                      </p>
-                                      <p className="text-sm font-bold text-foreground">
-                                        {booking.guests}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {/* Cancellation Info */}
-                                  {booking.status === 'cancelled' && (
-                                    <div className="mt-3 flex items-start gap-2 text-[10px] text-red-500 bg-red-500/10 p-2 rounded-lg border border-red-500/10">
-                                      <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                                      <span>
-                                        Booking cancelled. Refunds for bank transfers are processed manually within 24-48 hours. Contact support if needed.
-                                      </span>
-                                    </div>
+                              <div className="mt-2 flex items-center justify-between">
+                                <div className="flex gap-2">
+                                  {booking.status === 'confirmed' && (
+                                    <Button size="sm" variant="outline" className="h-7 text-xs rounded-full border-foreground text-foreground hover:bg-foreground hover:text-background font-bold">
+                                      Show details
+                                    </Button>
+                                  )}
+                                  {booking.status === 'pending' && (
+                                    <Badge variant="secondary" className="font-normal text-xs bg-orange-100 text-orange-700">Pending approval</Badge>
                                   )}
                                 </div>
-
-                                <div className="mt-6 flex gap-3">
-                                  <Button
-                                    onClick={() => { setSelectedBooking(booking); setActionType('manage'); }}
-                                    className="flex-1 bg-[#F48221] hover:bg-orange-600 font-bold rounded-xl h-11 text-white shadow-lg shadow-orange-500/20"
-                                  >
-                                    Manage Booking
-                                  </Button>
-                                  <Button
-                                    onClick={() => { setSelectedBooking(booking); setActionType('receipt'); }}
-                                    className="flex-1 bg-foreground text-background hover:bg-foreground/90 font-bold rounded-xl h-11 border border-border/10 shadow-lg"
-                                  >
-                                    Get Receipt
-                                  </Button>
-                                </div>
+                                <span className="font-bold text-sm sm:text-base text-foreground">
+                                  {formatNaira(booking.total_price)}
+                                </span>
                               </div>
-                            </CardContent>
-                          </Card>
+                            </div>
+                          </div>
                         ))}
 
                       {selectedBooking && (
@@ -367,7 +316,7 @@ const UserDashboard = () => {
                           <div className="relative">
                             <img
                               src={fav.images?.[0] || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"}
-                              className="h-56 w-full object-cover"
+                              className="h-40 md:h-56 w-full object-cover"
                               alt=""
                             />
                             <button
@@ -380,7 +329,7 @@ const UserDashboard = () => {
                               <Heart className="h-5 w-5 fill-red-500 text-red-500" />
                             </button>
                           </div>
-                          <CardContent className="p-5">
+                          <CardContent className="p-4 md:p-5">
                             <div className="flex justify-between items-start mb-2">
                               <h3 className="font-bold text-foreground leading-tight">
                                 {fav.title}
@@ -528,9 +477,9 @@ const UserDashboard = () => {
             </div>
           </div>
         </div>
-      </main>
+      </main >
       <Footer />
-    </div>
+    </div >
   );
 };
 

@@ -99,7 +99,7 @@ const Auth = () => {
           </div>
 
           {/* Card */}
-          <div className="rounded-2xl border border-border bg-card p-8 shadow-card">
+          <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-card mx-4 md:mx-0">
             <h1 className="mb-2 text-center text-2xl font-bold">
               {isLogin ? "Welcome back" : "Create an account"}
             </h1>

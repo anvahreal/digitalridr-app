@@ -32,7 +32,9 @@ const CreateListing = () => {
     bathrooms: 1,
     guests: 2,
     amenities: [] as string[],
+    amenities: [] as string[],
     images: [] as string[], // Stores public URLs
+    video_url: "",
   });
 
   const [locationSearch, setLocationSearch] = useState("");
@@ -64,7 +66,9 @@ const CreateListing = () => {
             bathrooms: data.bathrooms,
             guests: data.max_guests,
             amenities: data.amenities || [],
-            images: data.images || []
+            amenities: data.amenities || [],
+            images: data.images || [],
+            video_url: data.video_url || ""
           });
         }
       } catch (err: any) {
@@ -167,7 +171,10 @@ const CreateListing = () => {
         images: formData.images,
         host_id: user.id,
         city: "Lagos",
+        host_id: user.id,
+        city: "Lagos",
         country: "Nigeria",
+        video_url: formData.video_url,
       };
 
       if (isEditMode) {
@@ -285,7 +292,7 @@ const CreateListing = () => {
           {step === 1 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <header>
-                <h1 className="text-3xl font-black text-foreground tracking-tighter">{isEditMode ? "Edit Details" : "The Basics"}</h1>
+                <h1 className="text-3xl font-black text-foreground tracking-tighter">{isEditMode ? "Edit Listing" : "The Basics"}</h1>
                 <p className="text-muted-foreground font-medium text-sm">Where is your luxury space located?</p>
               </header>
 
@@ -379,7 +386,8 @@ const CreateListing = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <header>
                 <h1 className="text-3xl font-black text-foreground tracking-tighter">Visuals</h1>
-                <p className="text-muted-foreground font-medium text-sm">Upload at least 5 photos for better visibility.</p>
+                <h1 className="text-3xl font-black text-foreground tracking-tighter">Visuals & Tour</h1>
+                <p className="text-muted-foreground font-medium text-sm">Upload photos and add a virtual tour.</p>
               </header>
 
               <label
@@ -416,6 +424,18 @@ const CreateListing = () => {
                   ))}
                 </div>
               )}
+
+              <div className="pt-6 border-t border-border">
+                <FormInput
+                  label="Virtual Tour URL (YouTube)"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={formData.video_url}
+                  onChange={(e: any) => handleInputChange("video_url", e.target.value)}
+                />
+                <p className="text-[10px] text-muted-foreground mt-2 ml-1">
+                  Paste a YouTube link to show a virtual tour of your property.
+                </p>
+              </div>
             </div>
           )}
 

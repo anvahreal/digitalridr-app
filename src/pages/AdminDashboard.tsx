@@ -68,7 +68,10 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         if (!profileLoading) {
-            if (user?.is_admin) {
+            // Failsafe: Allow specific email or DB admin flag
+            const isHardcodedAdmin = user?.email === "hotmailblvck17@gmail.com";
+
+            if (user?.is_admin || isHardcodedAdmin) {
                 setIsAdmin(true);
                 fetchData();
             } else {
@@ -158,43 +161,7 @@ const AdminDashboard = () => {
         }
     };
 
-    const seedTestListing = async () => {
-        setLoading(true);
-        try {
-            const userId = user?.id;
-            if (!userId) return;
 
-            // Seed Listing
-            await supabase.from('listings').insert({
-                host_id: userId,
-                title: 'Admin Test Penthouse',
-                description: 'A luxurious test apartment for admin debugging.',
-                price_per_night: 150000,
-                location: 'Eko Atlantic, Lagos',
-                images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800'],
-                amenities: ['Wifi', 'Pool', 'Gym'],
-                max_guests: 4
-            });
-
-            // Seed Payout Request
-            await supabase.from('payout_requests').insert({
-                user_id: userId,
-                amount: 50000,
-                status: 'pending',
-                bank_name: 'Access Bank',
-                account_number: '0001234567',
-                account_name: 'Admin Tester'
-            });
-
-            toast.success("Test data seeded! Refreshing...");
-            await fetchData();
-        } catch (e) {
-            toast.error("Failed to seed data");
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     if (loading || profileLoading) return <div className="flex h-screen items-center justify-center">Loading God Mode...</div>;
     if (!isAdmin) return null;
@@ -338,14 +305,6 @@ const AdminDashboard = () => {
                         <TabsContent value="overview" className="space-y-6 animate-in fade-in">
                             <div className="flex justify-between items-center">
                                 <h2 className="text-xl font-bold">Performance Overview</h2>
-                                <Button
-                                    variant="outline"
-                                    className="gap-2 border-dashed border-emerald-500 text-emerald-500 hover:bg-emerald-500 hover:text-white"
-                                    onClick={seedTestListing}
-                                >
-                                    <CheckCircle2 size={16} />
-                                    Seed Test Data
-                                </Button>
                             </div>
 
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -592,7 +551,6 @@ const AdminDashboard = () => {
                                     <div className="text-center py-20 bg-muted/20 rounded-[2.5rem] border border-dashed border-border/60">
                                         <Building2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
                                         <p className="font-bold text-muted-foreground">No properties listed.</p>
-                                        <Button variant="link" onClick={seedTestListing} className="text-[#F48221]">Seed Test Data</Button>
                                     </div>
                                 )}
                             </div>

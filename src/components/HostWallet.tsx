@@ -124,7 +124,7 @@ const HostWallet = () => {
               ) : bookings.length === 0 ? (
                 <tr><td colSpan={2} className="p-6 text-center text-muted-foreground">No transactions yet.</td></tr>
               ) : bookings.map((tx: any) => (
-                <tr key={tx.id} className="hover:bg-accent/50 transition-colors">
+                <tr key={tx.id} className="hover:bg-muted/40 transition-colors cursor-default">
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-full ${tx.status === "confirmed" || tx.status === "completed" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}`}>

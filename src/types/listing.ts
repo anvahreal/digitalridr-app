@@ -21,6 +21,8 @@ export interface Listing {
   created_at: string;
   latitude?: number;
   longitude?: number;
+  content_type?: string;
+  video_url?: string;
 }
 
 export interface SearchFilters {

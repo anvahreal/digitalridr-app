@@ -80,7 +80,7 @@ const Index = () => {
 
           {!loading && listings.length === 0 && (
             <div className="text-center py-20">
-              <p className="text-muted-foreground font-medium">No listings found. Try running the seed script.</p>
+              <p className="text-muted-foreground font-medium">No listings found yet.</p>
             </div>
           )}
         </div>

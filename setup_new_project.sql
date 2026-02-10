@@ -7,14 +7,10 @@
 -- ==============================================================================
 -- PART 0: CLEANUP (Optional - Uncomment if re-running)
 -- ==============================================================================
-DROP TABLE IF EXISTS public.messages CASCADE;
-DROP TABLE IF EXISTS public.conversations CASCADE;
-DROP TABLE IF EXISTS public.bookings CASCADE;
-DROP TABLE IF EXISTS public.listings CASCADE;
-DROP TABLE IF EXISTS public.payout_requests CASCADE;
-DROP TABLE IF EXISTS public.payout_methods CASCADE;
-DROP TABLE IF EXISTS public.favorites CASCADE;
-DROP TABLE IF EXISTS public.profiles CASCADE;
+-- ==============================================================================
+-- PART 0: CLEANUP (SAFE MODE - No Drop Tables)
+-- ==============================================================================
+-- The destructive DROP TABLE commands have been removed to prevent data loss.
 
 -- ==============================================================================
 -- PART 1: MASTER SCHEMA (Tables)
@@ -73,6 +69,7 @@ create table if not exists public.listings (
   beds integer default 1,
   latitude numeric,
   longitude numeric,
+  video_url text, -- Added for Virtual Tour
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   rating numeric default 0,
   review_count integer default 0
