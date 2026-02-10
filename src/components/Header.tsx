@@ -137,7 +137,7 @@ export function Header() {
                     className="rounded-xl focus:bg-accent focus:text-accent-foreground cursor-pointer"
                   >
                     <Link to="/dashboard" className="font-black py-2">
-                      My Trips
+                      My Stays
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem

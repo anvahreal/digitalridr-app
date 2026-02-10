@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/lib/supabase";
@@ -47,6 +48,7 @@ const CreateListing = () => {
   // Form State
   const [formData, setFormData] = useState({
     title: "",
+    description: "", // Added description
     location: "",
     address: "", // Specific street address
     price: "",
@@ -54,6 +56,7 @@ const CreateListing = () => {
     bathrooms: 1,
     guests: 2,
     amenities: [] as string[],
+    house_rules: "", // Added house rules
     images: [] as string[], // Stores public URLs
     video_url: "",
   });
@@ -186,6 +189,7 @@ const CreateListing = () => {
         bathrooms: formData.bathrooms,
         max_guests: formData.guests,
         amenities: formData.amenities,
+        house_rules: formData.house_rules.split('\n').filter(r => r.trim() !== ''), // Convert to array
         images: formData.images,
         city: "Lagos",
         country: "Nigeria",
@@ -397,7 +401,7 @@ const CreateListing = () => {
 
               <div className="space-y-4">
                 <h3 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Key Amenities</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {AMENITIES.map((item) => (
                     <AmenityButton
                       key={item}
@@ -407,6 +411,16 @@ const CreateListing = () => {
                     />
                   ))}
                 </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">House Rules</h3>
+                <Textarea
+                  placeholder="e.g. No parties, quiet hours after 10 PM, no smoking..."
+                  className="min-h-[100px] bg-muted border-none rounded-2xl p-4 font-medium text-foreground resize-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                  value={formData.house_rules}
+                  onChange={(e: any) => handleInputChange("house_rules", e.target.value)}
+                />
               </div>
             </div>
           )}

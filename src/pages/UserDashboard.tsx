@@ -121,7 +121,7 @@ const UserDashboard = () => {
             <aside className="hidden lg:block space-y-6 sticky top-24 self-start max-h-[calc(100vh-8rem)] overflow-y-auto no-scrollbar">
               <div className="space-y-1">
                 {[
-                  { id: "trips", label: "My Trips", icon: Calendar },
+                  { id: "trips", label: "My Stays", icon: Calendar },
                   { id: "favorites", label: "Favorites", icon: Heart },
                   { id: "profile", label: "Profile", icon: User },
                   { id: "settings", label: "Settings", icon: Settings },
@@ -165,7 +165,7 @@ const UserDashboard = () => {
                     value="trips"
                     className="rounded-lg font-bold text-[11px] data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground"
                   >
-                    Trips
+                    Stays
                   </TabsTrigger>
                   <TabsTrigger
                     value="favorites"

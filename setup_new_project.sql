@@ -69,6 +69,7 @@ create table if not exists public.listings (
   location text not null,
   images text[] default '{}',
   amenities text[] default '{}',
+  house_rules text[] default '{}', -- Added for House Rules
   bedrooms integer default 1,
   bathrooms numeric default 1,
   max_guests integer default 1,

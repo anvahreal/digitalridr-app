@@ -1,7 +1,8 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { useProfile } from "@/hooks/useProfile";
 import {
   DollarSign,
   Shield,
@@ -14,6 +15,19 @@ import {
 } from "lucide-react";
 
 const Host = () => {
+  const navigate = useNavigate();
+  const { user, profile } = useProfile();
+
+  const handleGetStarted = () => {
+    if (!user) {
+      navigate("/auth");
+    } else if (profile?.is_host || profile?.host_status === 'approved') {
+      navigate("/host/dashboard");
+    } else {
+      navigate("/host/create-listing");
+    }
+  };
+
   const benefits = [
     {
       icon: DollarSign,
@@ -83,11 +97,13 @@ const Host = () => {
                 Join millions of hosts earning extra income by sharing their space with travelers around the world.
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
-                <Link to="/auth">
-                  <Button size="xl" className="bg-[#F48221] hover:bg-[#E36D0B] text-white font-bold rounded-2xl h-14 px-8">
-                    Get started
-                  </Button>
-                </Link>
+                <Button
+                  size="xl"
+                  onClick={handleGetStarted}
+                  className="bg-[#F48221] hover:bg-[#E36D0B] text-white font-bold rounded-2xl h-14 px-8"
+                >
+                  Get started
+                </Button>
                 <Button
                   size="xl"
                   variant="outline"
@@ -230,11 +246,13 @@ const Host = () => {
               <p className="mt-4 text-lg text-muted-foreground">
                 Join our community of hosts and start earning today.
               </p>
-              <Link to="/auth">
-                <Button size="xl" className="mt-8 gap-2">
-                  Start hosting <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
+              <Button
+                size="xl"
+                onClick={handleGetStarted}
+                className="mt-8 gap-2"
+              >
+                Start hosting <ArrowRight className="h-5 w-5" />
+              </Button>
             </div>
           </div>
         </section>
