@@ -23,6 +23,8 @@ export interface Listing {
   longitude?: number;
   content_type?: string;
   video_url?: string;
+  house_rules?: string[];
+  security_deposit?: number;
 }
 
 export interface SearchFilters {

@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { usePaystackPayment } from "react-paystack";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useListing } from "@/hooks/useListings";
 import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/hooks/useProfile";
@@ -23,14 +23,11 @@ import {
   Building2,
   Plus,
   Minus,
-  Copy,
-  CheckCircle2,
   Loader2,
   Info,
   Clock,
   Ban,
   Cigarette,
-  PawPrint,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -66,37 +63,13 @@ const Checkout = () => {
   const [guests, setGuests] = useState(
     parseInt(searchParams.get("guests") || "1"),
   );
-  const [paymentMethod, setPaymentMethod] = useState("card");
+  const [paymentMethod, setPaymentMethod] = useState("paystack");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isEditingGuests, setIsEditingGuests] = useState(false);
   // Dropdown States (Manual Accordion)
   const [openSection, setOpenSection] = useState<string | null>("house-rules");
 
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationStep, setVerificationStep] = useState<
-    "pending" | "success"
-  >("pending");
-
-  // Redirect if not logged in
-  if (!userLoading && !user) {
-    // Optional: You could render a message or redirect
-    // Given the error was crash, let's redirect
-    // But we can't redirect during render easily without useEffect, 
-    // usually it's better to show a "Please login" state or use useEffect.
-    // For now, I'll return a layout that redirects or tells them to login.
-    // actually, using navigate in useEffect is better pattern, but here for simplicity:
-    // returning null and navigating in useEffect would be best.
-    // But let's check header/footer usage.
-  }
-
-  // Effect for redirect
-  if (!userLoading && !user) {
-    // We'll handle this with a visual prompted or effect.
-    // However, since this is a straight fix, let's just show a login prompt instead of crashing
-    // OR just verify in processBooking.
-    // But the user asked for "Continue" implying they want it fixed.
-    // The previous error was a crash.
-  }
 
   if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[#F48221]" /></div>;
 
@@ -146,10 +119,89 @@ const Checkout = () => {
   }
 
   const nights = Math.max(1, differenceInDays(checkOut, checkIn));
-  const serviceFee = Math.round(nights * listing.price_per_night * 0.12);
-  const total = nights * listing.price_per_night + serviceFee;
+  const securityDeposit = listing.security_deposit || 0;
+  const total = nights * listing.price_per_night + securityDeposit;
 
-  const processBooking = async () => {
+  // Fee Calculation (Host bears cost)
+  const rentTotal = nights * listing.price_per_night;
+
+  // Platform fee is 10% of the RENT income (excluding deposit)
+  const platformFee = Math.round(rentTotal * 0.10);
+
+  // Host Payout = Rent - Fee
+  const hostPayoutAmount = rentTotal - platformFee;
+
+  const config = {
+    reference: (new Date()).getTime().toString(),
+    email: user.email || "customer@example.com",
+    amount: total * 100, // Kobo
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_PLACEHOLDER_KEY',
+  };
+
+  const initializePayment = usePaystackPayment(config);
+
+  const onSuccess = async (reference: any) => {
+    setIsVerifying(true);
+    try {
+      // 1. Try atomic RPC first
+      const { data, error } = await supabase.rpc('process_booking_payment', {
+        p_listing_id: listingId,
+        p_guest_id: user.id,
+        p_host_id: listing.host_id,
+        p_check_in: checkIn.toISOString(),
+        p_check_out: checkOut.toISOString(),
+        p_guests: guests,
+        p_total_price: total,
+        p_platform_fee: platformFee,
+        p_host_payout_amount: hostPayoutAmount,
+        p_payment_reference: reference.reference,
+        p_security_deposit: securityDeposit
+      });
+
+      // 2. Fallback if RPC fails (e.g. not deployed yet)
+      if (error || !data?.success) {
+        console.warn("RPC failed, using fallback insert:", error);
+        const { error: fallbackError } = await supabase.from('bookings').insert({
+          guest_id: user.id,
+          host_id: listing.host_id,
+          listing_id: listingId,
+          check_in: checkIn.toISOString(),
+          check_out: checkOut.toISOString(),
+          total_price: total,
+          guests: guests,
+          status: 'confirmed',
+          payment_reference: reference.reference,
+          platform_fee: platformFee,
+          host_payout_amount: hostPayoutAmount,
+          security_deposit: securityDeposit
+        });
+        if (fallbackError) throw fallbackError;
+      }
+
+      toast.success("Payment successful! Booking confirmed.");
+      navigate("/dashboard");
+
+    } catch (err: any) {
+      console.error("Booking error:", err);
+      toast.error(err.message || "Failed to process booking");
+      setIsVerifying(false);
+    }
+  };
+
+  const onClose = () => {
+    toast.info("Payment cancelled");
+    setIsVerifying(false);
+  };
+
+  const handlePayment = () => {
+    if (paymentMethod === "paystack") {
+      initializePayment(onSuccess, onClose);
+    } else if (paymentMethod === "bank") {
+      processManualBooking();
+    }
+  };
+
+  const processManualBooking = async () => {
     setIsVerifying(true);
     try {
       const { error } = await supabase.from('bookings').insert({
@@ -160,14 +212,15 @@ const Checkout = () => {
         check_out: checkOut.toISOString(),
         total_price: total,
         guests: guests,
-        status: 'pending'
+        total_price: total,
+        guests: guests,
+        status: 'pending',
+        security_deposit: securityDeposit
       });
 
       if (error) throw error;
 
-      // Simulate verification delay
       setTimeout(() => {
-        setVerificationStep("success");
         toast.success("Booking request sent! Waiting for confirmation.");
         navigate("/dashboard");
       }, 2000);
@@ -267,15 +320,13 @@ const Checkout = () => {
                   Choose how to pay
                 </h3>
                 <div className="grid grid-cols-3 gap-3">
-                  <RestrictedPaymentMethod active={false}>
-                    <button
-                      disabled
-                      className={`w-full flex flex-col items-center gap-2 rounded-2xl border-2 py-4 transition-all border-border bg-muted/50`}
-                    >
-                      <CreditCard className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-[11px] font-bold capitalize text-muted-foreground">Card</span>
-                    </button>
-                  </RestrictedPaymentMethod>
+                  <button
+                    onClick={() => setPaymentMethod("paystack")}
+                    className={`flex flex-col items-center gap-2 rounded-2xl border-2 py-4 transition-all ${paymentMethod === "paystack" ? "border-indigo-600 bg-indigo-50/10" : "border-transparent bg-card shadow-sm"}`}
+                  >
+                    <CreditCard className={`h-5 w-5 ${paymentMethod === "paystack" ? "text-indigo-600" : "text-muted-foreground"}`} />
+                    <span className="text-[11px] font-bold capitalize">Paystack</span>
+                  </button>
 
                   <RestrictedPaymentMethod active={false}>
                     <button
@@ -283,7 +334,7 @@ const Checkout = () => {
                       className={`w-full flex flex-col items-center gap-2 rounded-2xl border-2 py-4 transition-all border-border bg-muted/50`}
                     >
                       <Wallet className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-[11px] font-bold capitalize text-muted-foreground">Paystack</span>
+                      <span className="text-[11px] font-bold capitalize text-muted-foreground">Wallet</span>
                     </button>
                   </RestrictedPaymentMethod>
 
@@ -306,7 +357,7 @@ const Checkout = () => {
                 )}
               </div>
 
-              {/* REWRITTEN DROPDOWNS (Things to Know) */}
+              {/* DROPDOWNS (Things to Know) */}
               <div className="space-y-4">
                 <h3 className="text-lg font-black text-foreground px-1">
                   Things to know
@@ -339,66 +390,51 @@ const Checkout = () => {
 
                   {openSection === "house-rules" && (
                     <div className="px-5 pb-6 pt-2 animate-in slide-in-from-top-2 duration-200">
+                      {/* DYNAMIC DESCRIPTION - "About this place" */}
                       <div className="bg-muted/50 rounded-xl p-4 mb-4">
                         <p className="text-xs text-muted-foreground leading-relaxed italic">
-                          "Welcome to my home! I only ask that you treat the
-                          space with the same love and respect as you would your
-                          own. Enjoy your stay!"
+                          "{listing.description || 'Welcome to my home! I only ask that you treat the space with the same love and respect as you would your own. Enjoy your stay!'}"
                         </p>
                       </div>
 
+                      {/* DYNAMIC HOUSE RULES */}
                       <div className="space-y-4">
-                        <div className="flex gap-3">
-                          <Clock className="h-4 w-4 text-muted-foreground mt-0.5" />
-                          <div>
-                            <p className="text-xs font-bold text-foreground">
-                              Check-in / Check-out
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              Check-in starts 2:00 PM. Please checkout by 11:00
-                              AM.
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-3">
-                          <Ban className="h-4 w-4 text-muted-foreground mt-0.5" />
-                          <div>
-                            <p className="text-xs font-bold text-foreground">
-                              No Parties or Loud Music
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              This is a quiet residential area. Please keep
-                              noise to a minimum after 10:00 PM.
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-3">
-                          <Cigarette className="h-4 w-4 text-muted-foreground mt-0.5" />
-                          <div>
-                            <p className="text-xs font-bold text-foreground">
-                              Smoking Policy
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              Strictly no smoking inside the building. Use the
-                              balcony if necessary.
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-3">
-                          <Shield className="h-4 w-4 text-muted-foreground mt-0.5" />
-                          <div>
-                            <p className="text-xs font-bold text-foreground">
-                              General Care
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              Please turn off the AC and lights when leaving the
-                              apartment. Lock all doors.
-                            </p>
-                          </div>
-                        </div>
+                        {listing.house_rules && listing.house_rules.length > 0 ? (
+                          listing.house_rules.map((rule: string, idx: number) => (
+                            <div key={idx} className="flex gap-3">
+                              <Shield className="h-4 w-4 text-muted-foreground mt-0.5" />
+                              <p className="text-xs font-bold text-foreground">
+                                {rule}
+                              </p>
+                            </div>
+                          ))
+                        ) : (
+                          // Fallback Rules if none are set
+                          <>
+                            <div className="flex gap-3">
+                              <Clock className="h-4 w-4 text-muted-foreground mt-0.5" />
+                              <div>
+                                <p className="text-xs font-bold text-foreground">
+                                  Check-in / Check-out
+                                </p>
+                                <p className="text-[11px] text-muted-foreground">
+                                  Check-in starts 2:00 PM. Please checkout by 11:00 AM.
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-3">
+                              <Ban className="h-4 w-4 text-muted-foreground mt-0.5" />
+                              <div>
+                                <p className="text-xs font-bold text-foreground">
+                                  No Parties
+                                </p>
+                                <p className="text-[11px] text-muted-foreground">
+                                  This is a quiet residential area.
+                                </p>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}
@@ -471,7 +507,7 @@ const Checkout = () => {
                   size="lg"
                   className="w-full h-16 bg-[#F48221] hover:bg-orange-600 text-lg font-bold rounded-2xl shadow-xl text-white"
                   disabled={!agreedToTerms}
-                  onClick={processBooking}
+                  onClick={handlePayment}
                 >
                   {isVerifying ? (
                     <div className="flex items-center gap-2">
@@ -479,7 +515,7 @@ const Checkout = () => {
                     </div>
                   ) : paymentMethod === "bank"
                     ? `I have sent ${formatNaira(total)}`
-                    : "Confirm and pay"}
+                    : `Pay ${formatNaira(total)} with Paystack`}
                 </Button>
               </div>
             </div>
@@ -512,6 +548,12 @@ const Checkout = () => {
                       {formatNaira(total)}
                     </span>
                   </div>
+                  {securityDeposit > 0 && (
+                    <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                      <span>Security Deposit (Refundable)</span>
+                      <span>{formatNaira(securityDeposit)}</span>
+                    </div>
+                  )}
                   <Separator />
                   <div className="flex justify-between items-center">
                     <span className="text-base font-black text-foreground">
@@ -531,8 +573,6 @@ const Checkout = () => {
         </div>
       </main>
       <Footer />
-
-
     </div>
   );
 };

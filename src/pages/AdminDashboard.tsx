@@ -164,6 +164,43 @@ const AdminDashboard = () => {
 
 
 
+    const handleMessageHost = async (hostId: string) => {
+        try {
+            if (!user) return;
+
+            // Check if conversation exists
+            const { data: existingConvs } = await supabase
+                .from('conversations')
+                .select('id')
+                .or(`and(host_id.eq.${user.id},guest_id.eq.${hostId}),and(host_id.eq.${hostId},guest_id.eq.${user.id})`)
+                .limit(1)
+                .maybeSingle(); // Changed to maybeSingle to avoid error if not found
+
+            let conversationId = existingConvs?.id;
+
+            if (!conversationId) {
+                // Create new conversation
+                const { data: newConv, error } = await supabase
+                    .from('conversations')
+                    .insert({
+                        host_id: hostId,
+                        guest_id: user.id
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                conversationId = newConv.id;
+            }
+
+            navigate('/host/messages', { state: { selectedChatId: conversationId } });
+
+        } catch (error: any) {
+            console.error("Error starting conversation:", error);
+            toast.error(`Failed to start conversation: ${error.message || "Unknown error"}`);
+        }
+    };
+
     if (loading || profileLoading) return <div className="flex h-screen items-center justify-center">Loading God Mode...</div>;
     if (!isAdmin) return null;
 
@@ -698,6 +735,10 @@ const HostTable = ({ hosts, onBan, onUpdateStatus, limit, onViewProperties }: an
                                         <DropdownMenuItem className="rounded-xl font-bold cursor-pointer py-2.5 px-3 focus:bg-accent focus:text-accent-foreground transition-colors group/item" onClick={() => window.location.href = `mailto:${h.email}`}>
                                             <Mail className="mr-3 h-4 w-4 text-muted-foreground group-hover/item:text-foreground" />
                                             Send Email
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="rounded-xl font-bold cursor-pointer py-2.5 px-3 focus:bg-accent focus:text-accent-foreground transition-colors group/item" onClick={() => handleMessageHost(h.id)}>
+                                            <MessageSquare className="mr-3 h-4 w-4 text-muted-foreground group-hover/item:text-foreground" />
+                                            Message User
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator className="bg-border/50 mx-2" />
                                         <DropdownMenuItem

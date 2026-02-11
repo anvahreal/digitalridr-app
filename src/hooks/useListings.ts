@@ -119,6 +119,7 @@ export function useListing(id: string | undefined) {
                         ...data,
                         images: data.images || [],
                         amenities: data.amenities || [],
+                        house_rules: data.house_rules || [],
                         host_name: hostData?.full_name || 'Host',
                         host_avatar: hostData?.avatar_url || 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400'
                     });

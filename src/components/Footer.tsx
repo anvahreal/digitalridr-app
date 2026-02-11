@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Facebook, Twitter, Instagram, Globe } from "lucide-react";
+import { Facebook, Twitter, Instagram, Globe, Youtube, Music } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -7,15 +7,15 @@ export function Footer() {
   const footerLinks = {
     support: [
       { label: "Help Center", href: "#" },
-      { label: "Safety info", href: "#" }, // Shortened for mobile
-      { label: "Cancellations", href: "#" }, // Shortened
+      { label: "Safety info", href: "#" },
+      { label: "Cancellations", href: "#" },
     ],
     hosting: [
       { label: "Host your home", href: "/host" },
-      { label: "Resource Center", href: "#" },
+      { label: "Learn More", href: "/learn-more" },
     ],
     about: [
-      { label: "About Us", href: "#" },
+      { label: "About Us", href: "/learn-more" },
       { label: "Contact", href: "#" },
     ],
   };
@@ -68,14 +68,17 @@ export function Footer() {
           <div className="col-span-1">
             <h3 className="mb-3 text-xs font-black uppercase tracking-widest text-foreground">Connect</h3>
             <div className="flex gap-4">
-              <a href="#" className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all">
+              <a href="https://www.instagram.com/digitalridr_apartments?igsh=MTVxejdpM3hqcmtkaA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all">
                 <Instagram className="h-4 w-4" />
               </a>
-              <a href="#" className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all">
-                <Twitter className="h-4 w-4" />
+              <a href="https://youtube.com/@digitalridrapartments?si=n4IkittzTFT5pq3V" target="_blank" rel="noopener noreferrer" className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all">
+                <Youtube className="h-4 w-4" />
               </a>
-              <a href="#" className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all">
+              <a href="https://www.facebook.com/share/1ASPcahzey/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all">
                 <Facebook className="h-4 w-4" />
+              </a>
+              <a href="https://www.tiktok.com/@digitalridr_apartments?_r=1&_t=ZS-93pOANsWeIO" target="_blank" rel="noopener noreferrer" className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all">
+                <Music className="h-4 w-4" />
               </a>
             </div>
           </div>

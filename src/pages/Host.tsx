@@ -107,6 +107,7 @@ const Host = () => {
                 <Button
                   size="xl"
                   variant="outline"
+                  onClick={() => navigate('/learn-more')}
                   className="rounded-2xl border-border bg-background hover:bg-muted font-bold h-14 px-8"
                 >
                   Learn more
@@ -130,18 +131,18 @@ const Host = () => {
               <div className="mt-12 rounded-2xl border border-border bg-card p-8 shadow-card">
                 <div className="flex flex-col items-center justify-center gap-2">
                   <span className="text-sm text-muted-foreground">Estimated earnings</span>
-                  <span className="text-5xl font-bold text-primary md:text-6xl">$1,200</span>
+                  <span className="text-4xl font-bold text-primary md:text-5xl">₦600,000</span>
                   <span className="text-muted-foreground">per month</span>
                 </div>
                 <div className="mt-8 grid gap-6 text-left md:grid-cols-3">
                   <div className="rounded-lg bg-secondary p-4">
                     <BarChart3 className="mb-2 h-6 w-6 text-primary" />
-                    <p className="font-medium">7 nights booked</p>
+                    <p className="font-medium">10 nights booked</p>
                     <p className="text-sm text-muted-foreground">Average bookings per month</p>
                   </div>
                   <div className="rounded-lg bg-secondary p-4">
                     <DollarSign className="mb-2 h-6 w-6 text-primary" />
-                    <p className="font-medium">$175/night</p>
+                    <p className="font-medium">₦60,000/night</p>
                     <p className="text-sm text-muted-foreground">Average nightly rate</p>
                   </div>
                   <div className="rounded-lg bg-secondary p-4">
@@ -216,7 +217,6 @@ const Host = () => {
                   "Secure payment processing",
                   "Guest screening and reviews",
                   "Flexible cancellation policies",
-                  "Professional photography service",
                   "Smart pricing suggestions",
                   "Instant booking option",
                   "Host analytics dashboard",

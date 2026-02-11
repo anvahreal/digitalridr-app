@@ -105,8 +105,9 @@ const ListingDetail = () => {
 
   const nights = checkIn && checkOut ? differenceInDays(checkOut, checkIn) : 0;
   const subtotal = nights * listing.price_per_night;
-  const serviceFee = Math.round(subtotal * 0.12);
-  const total = subtotal + serviceFee;
+  const securityDeposit = listing.security_deposit || 0;
+  // Service fee is borne by host, so it's not added to guest total
+  const total = subtotal + securityDeposit;
 
   const handleReserve = () => {
     if (!checkIn || !checkOut) {
@@ -433,15 +434,22 @@ const ListingDetail = () => {
                       <span className="underline decoration-border underline-offset-4">{formatNaira(listing.price_per_night)} × {nights} nights</span>
                       <span>{formatNaira(subtotal)}</span>
                     </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span className="underline decoration-border underline-offset-4">Service fee</span>
-                      <span>{formatNaira(serviceFee)}</span>
-                    </div>
+                    {securityDeposit > 0 && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span className="underline decoration-border underline-offset-4">Security Deposit</span>
+                        <span>{formatNaira(securityDeposit)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between pt-3 text-lg font-bold text-foreground">
                       <span>Total</span>
                       <span>{formatNaira(total)}</span>
                     </div>
                   </div>
+                )}
+                {listing.security_deposit > 0 && nights === 0 && (
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    Includes refundable security deposit of {formatNaira(listing.security_deposit)}
+                  </p>
                 )}
               </div>
             </div>

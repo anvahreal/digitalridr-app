@@ -58,7 +58,9 @@ const CreateListing = () => {
     amenities: [] as string[],
     house_rules: "", // Added house rules
     images: [] as string[], // Stores public URLs
+    images: [] as string[], // Stores public URLs
     video_url: "",
+    security_deposit: "", // Added security deposit
   });
 
   const [uploading, setUploading] = useState(false);
@@ -80,6 +82,7 @@ const CreateListing = () => {
         if (data) {
           setFormData({
             title: data.title,
+            description: data.description || "",
             location: data.location,
             address: data.address || "",
             price: data.price_per_night.toString(),
@@ -88,7 +91,8 @@ const CreateListing = () => {
             guests: data.max_guests,
             amenities: data.amenities || [],
             images: data.images || [],
-            video_url: data.video_url || ""
+            video_url: data.video_url || "",
+            security_deposit: data.security_deposit ? data.security_deposit.toString() : "",
           });
         }
       } catch (err: any) {
@@ -179,9 +183,11 @@ const CreateListing = () => {
     setLoading(true);
     try {
       const priceValue = parseInt(formData.price.toString().replace(/[^0-9]/g, ''));
+      const securityDepositValue = formData.security_deposit ? parseInt(formData.security_deposit.toString().replace(/[^0-9]/g, '')) : 0;
 
       const payload = {
         title: formData.title,
+        description: formData.description,
         location: formData.location,
         address: formData.address,
         price_per_night: priceValue,
@@ -194,7 +200,9 @@ const CreateListing = () => {
         city: "Lagos",
         country: "Nigeria",
         video_url: formData.video_url,
+        video_url: formData.video_url,
         host_id: user.id,
+        security_deposit: securityDepositValue,
       };
 
       if (isEditMode) {
@@ -380,6 +388,14 @@ const CreateListing = () => {
                   type="number"
                   value={formData.price}
                   onChange={(e: any) => handleInputChange("price", e.target.value)}
+                />
+
+                <FormInput
+                  label="Refundable Security Deposit (₦)"
+                  placeholder="e.g. 50,000 (Optional)"
+                  type="number"
+                  value={formData.security_deposit}
+                  onChange={(e: any) => handleInputChange("security_deposit", e.target.value)}
                 />
               </Card>
             </div>

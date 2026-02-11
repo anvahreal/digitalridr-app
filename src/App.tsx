@@ -17,6 +17,7 @@ import MessagingCenter from "./pages/MessagingCenter";
 import ScrollToTop from "./components/ScrollToTop";
 import AdminDashboard from "./pages/AdminDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import LearnMore from "./pages/LearnMore";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/learn-more" element={<LearnMore />} />
               <Route path="/search" element={<Search />} />
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/listing/:id" element={<ListingDetail />} />

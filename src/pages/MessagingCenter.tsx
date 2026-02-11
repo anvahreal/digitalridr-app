@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,11 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 import {
-  Search, Send, Phone, CheckCheck, Clock, MapPin, Calendar, ChevronLeft, ShieldCheck
+  Search, Send, Phone, CheckCheck, Clock, MapPin, Calendar, ChevronLeft, ShieldCheck, MessageSquare
 } from "lucide-react";
 import { useMessages } from "@/hooks/useMessages";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 export default function MessagingCenter() {
   const navigate = useNavigate();
@@ -26,8 +28,21 @@ export default function MessagingCenter() {
     currentUserId
   } = useMessages();
 
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.selectedChatId && conversations.length > 0) {
+      const chatExists = conversations.find(c => c.id === location.state.selectedChatId);
+      if (chatExists && selectedChatId !== location.state.selectedChatId) {
+        setSelectedChatId(location.state.selectedChatId);
+        setView("chat");
+      }
+    }
+  }, [location.state, conversations, selectedChatId, setSelectedChatId]);
+
   const [view, setView] = useState<"list" | "chat">("list");
   const [newMessageText, setNewMessageText] = useState("");
+  const [supportLoading, setSupportLoading] = useState(false);
 
   const selectedChat = conversations.find(c => c.id === selectedChatId);
 
@@ -35,6 +50,62 @@ export default function MessagingCenter() {
     if (!newMessageText.trim()) return;
     await sendMessage(newMessageText);
     setNewMessageText("");
+  };
+
+  const handleContactSupport = async () => {
+    try {
+      setSupportLoading(true);
+      // Find Admin
+      const { data: adminProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', 'hotmailblvck17@gmail.com') // Hardcoded admin for support
+        .limit(1)
+        .maybeSingle();
+
+      if (!adminProfile) {
+        toast.error("Support currently unavailable (Admin profile not found)");
+        return;
+      }
+
+      if (adminProfile.id === currentUserId) {
+        toast.error("You are the super admin.");
+        return;
+      }
+
+      // Check if conversation exists
+      const { data: existingConvs } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`and(host_id.eq.${currentUserId},guest_id.eq.${adminProfile.id}),and(host_id.eq.${adminProfile.id},guest_id.eq.${currentUserId})`)
+        .limit(1)
+        .maybeSingle();
+
+      let conversationId = existingConvs?.id;
+
+      if (!conversationId) {
+        const { data: newConv, error } = await supabase
+          .from('conversations')
+          .insert({
+            host_id: adminProfile.id,
+            guest_id: currentUserId
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        conversationId = newConv.id;
+      }
+
+      setSelectedChatId(conversationId);
+      setView("chat");
+
+    } catch (err) {
+      console.error("Support Error:", err);
+      toast.error("Failed to connect to support");
+    } finally {
+      setSupportLoading(false);
+    }
   };
 
   return (
@@ -63,6 +134,18 @@ export default function MessagingCenter() {
               placeholder="Search messages..."
               className="pl-11 h-12 rounded-2xl border-none shadow-sm bg-card font-medium focus-visible:ring-primary text-foreground"
             />
+          </div>
+
+          <div className="px-4">
+            <Button
+              variant="outline"
+              className="w-full gap-2 rounded-xl border-dashed border-primary/50 text-primary hover:bg-primary/5 font-bold"
+              onClick={handleContactSupport}
+              disabled={supportLoading}
+            >
+              <MessageSquare className="h-4 w-4" />
+              {supportLoading ? "Connecting..." : "Contact Support"}
+            </Button>
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-2 pr-1">
@@ -192,12 +275,18 @@ export default function MessagingCenter() {
           <aside className="hidden lg:block w-72 space-y-4 shrink-0 overflow-y-auto">
             <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden bg-card">
               <div className="h-28 w-full relative">
-                <img src={selectedChat.listing?.images[0]} className="h-full w-full object-cover" />
+                {selectedChat.listing?.images && selectedChat.listing.images.length > 0 ? (
+                  <img src={selectedChat.listing.images[0]} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full bg-muted flex items-center justify-center">
+                    <MessageSquare className="h-8 w-8 text-muted-foreground/30" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <Badge className="absolute top-3 right-3 bg-primary border-none">{selectedChat.status || 'Active'}</Badge>
               </div>
               <CardContent className="p-5">
-                <h4 className="font-black text-foreground mb-4 leading-tight text-sm">{selectedChat.listing?.title}</h4>
+                <h4 className="font-black text-foreground mb-4 leading-tight text-sm">{selectedChat.listing?.title || "Direct Message"}</h4>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="bg-muted p-2 rounded-xl"><Calendar className="h-3.5 w-3.5 text-muted-foreground" /></div>
