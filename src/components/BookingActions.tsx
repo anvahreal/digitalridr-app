@@ -126,7 +126,7 @@ export const ManageBookingDialog = ({ booking, open, onOpenChange, onUpdate, pro
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
                     {booking.status !== 'cancelled' && (
                         <Button variant="destructive" onClick={handleCancel} disabled={loading}>
-                            {loading ? "Processing..." : "Cancel Booking"}
+                            {loading ? "Processing..." : (booking.status === 'pending' ? "Withdraw Request" : "Cancel Booking")}
                         </Button>
                     )}
                 </DialogFooter>

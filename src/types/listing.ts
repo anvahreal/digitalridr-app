@@ -69,6 +69,7 @@ export interface User {
   avatar_url?: string;
   is_host: boolean;
   host_status?: 'pending' | 'approved' | 'rejected' | 'none';
+  verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected';
   is_admin?: boolean;
   created_at: string;
 }

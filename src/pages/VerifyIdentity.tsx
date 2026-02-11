@@ -12,7 +12,7 @@ import { Loader2, Shield, Camera, Upload, CheckCircle2 } from "lucide-react";
 
 const VerifyIdentity = () => {
     const navigate = useNavigate();
-    const { profile, loading: profileLoading } = useProfile();
+    const { user, profile, loading: profileLoading } = useProfile();
     const [uploading, setUploading] = useState(false);
     const [idFile, setIdFile] = useState<File | null>(null);
     const [selfieFile, setSelfieFile] = useState<File | null>(null);
@@ -63,30 +63,42 @@ const VerifyIdentity = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!profile) return;
+
+        if (!user) {
+            toast.error("User not found. Please log in.");
+            return;
+        }
+
         if (!idFile || !selfieFile) {
             toast.error("Please upload both documents");
             return;
         }
 
         setUploading(true);
+        console.log("Starting verification submission...");
+
         try {
             // 1. Upload ID
-            const idUrl = await uploadFile(idFile, `${profile.id}/identity`);
+            console.log("Uploading ID...");
+            const idUrl = await uploadFile(idFile, `${user.id}/identity`);
+            console.log("ID Uploaded:", idUrl);
 
             // 2. Upload Selfie
-            const selfieUrl = await uploadFile(selfieFile, `${profile.id}/selfie`);
+            console.log("Uploading Selfie...");
+            const selfieUrl = await uploadFile(selfieFile, `${user.id}/selfie`);
+            console.log("Selfie Uploaded:", selfieUrl);
 
-            // 3. Update Profile via RPC (or direct update if policy allows, but we use RPC/direct for now)
-            // We'll try direct update first as per our migration script allowing it (though we didn't explicitly set policies yet)
-            // Actually, we created a function `submit_identity_verification` in the SQL script! Let's use that.
-
+            // 3. Update Profile via RPC
+            console.log("Calling RPC submit_identity_verification...");
             const { error } = await supabase.rpc('submit_identity_verification', {
                 doc_url: idUrl,
                 selfie_url_input: selfieUrl
             });
 
-            if (error) throw error;
+            if (error) {
+                console.error("RPC Error:", error);
+                throw error;
+            }
 
             toast.success("Verification submitted successfully!");
             navigate("/dashboard");

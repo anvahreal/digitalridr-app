@@ -194,6 +194,18 @@ const Checkout = () => {
   };
 
   const handlePayment = () => {
+    // Verification Check
+    if (user?.verification_status !== 'verified') {
+      toast.error("Identity Verification Required", {
+        description: "Please verify your identity to proceed with booking.",
+        action: {
+          label: "Verify Now",
+          onClick: () => navigate("/verify-identity")
+        }
+      });
+      return;
+    }
+
     if (paymentMethod === "paystack") {
       initializePayment(onSuccess, onClose);
     } else if (paymentMethod === "bank") {

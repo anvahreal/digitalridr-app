@@ -8,6 +8,7 @@ interface Profile {
   avatar_url: string | null;
   is_host: boolean;
   host_status: 'pending' | 'approved' | 'rejected' | 'none';
+  verification_status: 'unverified' | 'pending' | 'verified' | 'rejected';
   is_admin: boolean;
   updated_at: string | null;
 }
@@ -35,6 +36,7 @@ export function useProfile() {
             avatar_url: user.user_metadata.avatar_url,
             is_host: false,
             host_status: 'none',
+            verification_status: 'unverified',
             is_admin: false,
             created_at: user.created_at,
           };
@@ -42,7 +44,7 @@ export function useProfile() {
 
           const { data, error } = await supabase
             .from('profiles')
-            .select('id, full_name, avatar_url, website, is_host, host_status, is_admin, updated_at')
+            .select('id, full_name, avatar_url, website, is_host, host_status, verification_status, is_admin, updated_at')
             .eq('id', user.id)
             .single();
 
@@ -51,7 +53,7 @@ export function useProfile() {
           }
 
           if (data && mounted) {
-            setProfile(data);
+            setProfile(data as Profile); // Type assertion needed until Supabase types are fully synced
             // Update user object with profile data
             setUser(prev => prev ? ({
               ...prev,
@@ -59,6 +61,7 @@ export function useProfile() {
               avatar_url: data.avatar_url || prev.avatar_url,
               is_host: data.is_host,
               host_status: data.host_status,
+              verification_status: (data as any).verification_status || 'unverified',
               is_admin: data.is_admin,
             }) : null);
           }
@@ -114,6 +117,7 @@ export function useProfile() {
           avatar_url: updates.avatar_url || null,
           is_host: false,
           host_status: 'none',
+          verification_status: 'unverified',
           is_admin: false,
           updated_at: new Date().toISOString()
         };
@@ -131,6 +135,9 @@ export function useProfile() {
           full_name: updates.full_name || user.user_metadata.full_name || '',
           avatar_url: updates.avatar_url || user.user_metadata.avatar_url,
           is_host: false,
+          host_status: 'none',
+          verification_status: 'unverified',
+          is_admin: false,
           created_at: user.created_at,
         };
         return null;

@@ -61,8 +61,35 @@ const ListingDetail = () => {
   const [guests, setGuests] = useState(1);
   const [currentImage, setCurrentImage] = useState(0);
   const [showMap, setShowMap] = useState(false);
+  const [disabledDates, setDisabledDates] = useState<Date[]>([]);
 
   const isLiked = listing ? isFavorite(listing.id) : false;
+
+  // Fetch blocked dates
+  useEffect(() => {
+    if (!listing?.id) return;
+    async function fetchBlockedDates() {
+      const { data } = await supabase
+        .from('bookings')
+        .select('check_in, check_out')
+        .eq('listing_id', listing!.id)
+        .or('status.eq.confirmed,status.eq.pending');
+
+      if (data) {
+        const dates: Date[] = [];
+        data.forEach((booking: any) => {
+          let current = new Date(booking.check_in);
+          const end = new Date(booking.check_out);
+          while (current <= end) {
+            dates.push(new Date(current));
+            current.setDate(current.getDate() + 1);
+          }
+        });
+        setDisabledDates(dates);
+      }
+    }
+    fetchBlockedDates();
+  }, [listing?.id]);
 
   if (loading) {
     return (
@@ -389,7 +416,12 @@ const ListingDetail = () => {
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={checkIn} onSelect={setCheckIn} disabled={(date) => date < new Date()} />
+                        <Calendar
+                          mode="single"
+                          selected={checkIn}
+                          onSelect={setCheckIn}
+                          disabled={(date) => date < new Date() || disabledDates.some(d => d.toDateString() === date.toDateString())}
+                        />
                       </PopoverContent>
                     </Popover>
                     <Popover>
@@ -402,7 +434,15 @@ const ListingDetail = () => {
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="end">
-                        <Calendar mode="single" selected={checkOut} onSelect={setCheckOut} disabled={(date) => date < (checkIn || new Date())} />
+                        <Calendar
+                          mode="single"
+                          selected={checkOut}
+                          onSelect={setCheckOut}
+                          disabled={(date) =>
+                            date < (checkIn || new Date()) ||
+                            disabledDates.some(d => d.toDateString() === date.toDateString())
+                          }
+                        />
                       </PopoverContent>
                     </Popover>
                   </div>
