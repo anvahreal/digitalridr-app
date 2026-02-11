@@ -57,26 +57,33 @@ const Index = () => {
             loading={loading}
           />
 
-          {/* Stays in Lekki */}
-          <ListingSection
-            title="Stays in Lekki Phase 1"
-            items={listings.filter(l => l.location.includes("Lekki")).slice(0, 8)}
-            loading={loading}
-          />
+          {/* Dynamic Location Sections */}
+          {[...new Set(listings.map(l => l.location))].sort().map((loc) => (
+            <ListingSection
+              key={loc}
+              title={`Stays in ${loc}`}
+              items={listings.filter(l => l.location === loc).slice(0, 8)}
+              loading={loading}
+            />
+          ))}
 
-          {/* Stays in Ikoyi */}
-          <ListingSection
-            title="Stays in Ikoyi"
-            items={listings.filter(l => l.location.includes("Ikoyi")).slice(0, 8)}
-            loading={loading}
-          />
-
-          {/* Stays in VI */}
-          <ListingSection
-            title="Stays in Victoria Island"
-            items={listings.filter(l => l.location.includes("Victoria Island")).slice(0, 8)}
-            loading={loading}
-          />
+          {/* Browse by Neighborhood (Restored/Static) */}
+          <section className="py-6">
+            <div className="container px-4">
+              <h2 className="text-xl font-bold mb-6">Explore Top Neighborhoods</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {neighborhoods.map((n) => (
+                  <Link to={`/search?location=${n.name}`} key={n.name} className="relative group overflow-hidden rounded-2xl aspect-[4/3]">
+                    <img src={n.img} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" alt={n.name} />
+                    <div className="absolute inset-0 bg-black/40 flex flex-col justify-end p-4">
+                      <p className="text-white font-bold">{n.name}</p>
+                      <p className="text-white/80 text-xs">{n.count}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
 
           {!loading && listings.length === 0 && (
             <div className="text-center py-20">
