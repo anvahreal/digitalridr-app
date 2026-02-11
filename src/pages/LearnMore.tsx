@@ -2,10 +2,25 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Shield, CreditCard, Heart, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 const LearnMore = () => {
     const navigate = useNavigate();
+    const { hash } = useLocation();
+
+    useEffect(() => {
+        if (hash) {
+            const element = document.getElementById(hash.replace("#", ""));
+            if (element) {
+                setTimeout(() => {
+                    element.scrollIntoView({ behavior: "smooth" });
+                }, 100);
+            }
+        } else {
+            window.scrollTo(0, 0);
+        }
+    }, [hash]);
 
     return (
         <div className="min-h-screen bg-background font-sans">
@@ -73,8 +88,8 @@ const LearnMore = () => {
                     </div>
                 </section>
 
-                {/* Trust & Safety */}
-                <section className="space-y-6">
+                {/* Trust & Safety - Linked from Footer */}
+                <section id="safety" className="space-y-6 scroll-mt-24">
                     <div className="h-12 w-12 rounded-2xl bg-blue-100 flex items-center justify-center">
                         <Shield className="h-6 w-6 text-blue-600" />
                     </div>
@@ -88,7 +103,7 @@ const LearnMore = () => {
                             <h3 className="font-bold text-foreground">For Guests</h3>
                             <p className="text-sm text-muted-foreground">
                                 Book with confidence knowing that our support team is here to help if anything goes wrong
-                                during your stay.
+                                during your stay. We also offer flexible cancellation policies to give you peace of mind.
                             </p>
                         </div>
                         <div className="p-6 bg-muted rounded-3xl space-y-3">
@@ -100,8 +115,56 @@ const LearnMore = () => {
                     </div>
                 </section>
 
-                {/* About Company */}
-                <section className="space-y-6">
+                {/* Cancellation & Refund Policy - Linked from Footer */}
+                <section id="cancellation" className="space-y-6 scroll-mt-24">
+                    <div className="h-12 w-12 rounded-2xl bg-orange-100 flex items-center justify-center">
+                        <Shield className="h-6 w-6 text-[#F48221]" />
+                    </div>
+                    <h2 className="text-3xl font-black text-foreground">Cancellation & Refund Policy</h2>
+                    <p className="text-muted-foreground leading-relaxed">
+                        We understand that plans change. Our policies are designed to be fair to both guests and hosts, ensuring confidence in every booking.
+                    </p>
+
+                    <div className="grid md:grid-cols-2 gap-6 pt-4">
+                        <div className="p-6 bg-card border border-border rounded-3xl space-y-4">
+                            <h3 className="font-bold text-foreground text-lg">Flexible Cancellation</h3>
+                            <ul className="space-y-3 text-sm text-muted-foreground">
+                                <li className="flex gap-3">
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                    <span><strong>Free cancellation</strong> for 48 hours after booking.</span>
+                                </li>
+                                <li className="flex gap-3">
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                    <span><strong>50% refund</strong> if cancelled before check-in (minus service fee).</span>
+                                </li>
+                                <li className="flex gap-3">
+                                    <Shield className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                    <span>No refund for cancellations made after check-in.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div className="p-6 bg-card border border-border rounded-3xl space-y-4">
+                            <h3 className="font-bold text-foreground text-lg">Security Deposits</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Some listings may require a refundable security deposit.
+                            </p>
+                            <ul className="space-y-3 text-sm text-muted-foreground">
+                                <li className="flex gap-3">
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                    <span>Deposits are held securely by Digital Ridr.</span>
+                                </li>
+                                <li className="flex gap-3">
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                    <span><strong>Automatically refunded</strong> within 7 days of checkout if no damage is reported.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                {/* About Company - Linked from Footer */}
+                <section id="about" className="space-y-6 scroll-mt-24">
                     <div className="h-12 w-12 rounded-2xl bg-pink-100 flex items-center justify-center">
                         <Heart className="h-6 w-6 text-pink-600" />
                     </div>
@@ -113,6 +176,27 @@ const LearnMore = () => {
                     </p>
                 </section>
 
+                {/* Support Section - Linked from Footer (Help Center) */}
+                <section id="support" className="space-y-6 scroll-mt-24">
+                    <div className="bg-card border border-border rounded-[2rem] p-8 md:p-12 text-center space-y-6">
+                        <h2 className="text-3xl font-black text-foreground">Need Support?</h2>
+                        <p className="text-muted-foreground max-w-xl mx-auto">
+                            Our support team is available 24/7 to assist you with any questions, booking modifications, or concerns.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <Button className="rounded-2xl font-bold h-12 px-8 bg-black text-white hover:bg-black/80">
+                                Contact Guests Support
+                            </Button>
+                            <Button variant="outline" className="rounded-2xl font-bold h-12 px-8">
+                                Contact Host Support
+                            </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground pt-4">
+                            You can also email us at <a href="mailto:support@digitalridr.com" className="text-primary hover:underline">support@digitalridr.com</a>
+                        </p>
+                    </div>
+                </section>
+
                 <div className="pt-8 text-center">
                     <Button onClick={() => navigate('/')} size="lg" className="rounded-2xl font-bold px-8 h-14 text-base">
                         Start Exploring
@@ -122,7 +206,7 @@ const LearnMore = () => {
             </main>
 
             <Footer />
-        </div>
+        </div >
     );
 };
 

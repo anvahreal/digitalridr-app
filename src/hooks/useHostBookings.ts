@@ -17,6 +17,11 @@ export interface Booking {
         location: string;
         images: string[];
     };
+    profiles?: {
+        full_name: string;
+        avatar_url: string;
+        verification_status: 'unverified' | 'pending' | 'verified' | 'rejected';
+    };
     start_date: string; // Legacy support if needed
     end_date: string;
 }
@@ -48,7 +53,7 @@ export function useHostBookings() {
 
             const { data: bookingsData, error: bookingsError } = await supabase
                 .from('bookings')
-                .select('*, listing:listings(title)')
+                .select('*, listing:listings(title), profiles:guest_id(full_name, avatar_url, verification_status)')
                 .in('listing_id', listingIds)
                 .order('created_at', { ascending: false });
 

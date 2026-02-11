@@ -18,7 +18,10 @@ import {
     Menu,
     Copy,
     Mail,
-    MapPin
+    MapPin,
+    ShieldCheck,
+    FileText,
+    ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +68,9 @@ const AdminDashboard = () => {
     const [hosts, setHosts] = useState<any[]>([]);
     const [listings, setListings] = useState<any[]>([]);
     const [payouts, setPayouts] = useState<any[]>([]);
+
     const [bookings, setBookings] = useState<any[]>([]);
+    const [verifications, setVerifications] = useState<any[]>([]);
 
     useEffect(() => {
         if (!profileLoading) {
@@ -88,18 +93,21 @@ const AdminDashboard = () => {
                 { data: profiles },
                 { data: properties },
                 { data: bookingsData },
-                { data: payout_requests }
+                { data: payout_requests },
+                { data: verificationsData }
             ] = await Promise.all([
                 supabase.from('profiles').select('*').order('updated_at', { ascending: false }),
                 supabase.from('listings').select('*').order('created_at', { ascending: false }),
                 supabase.from('bookings').select('*').order('created_at', { ascending: false }),
-                supabase.from('payout_requests').select('*').order('created_at', { ascending: false })
+                supabase.from('payout_requests').select('*').order('created_at', { ascending: false }),
+                supabase.from('pending_verifications').select('*')
             ]);
 
             if (profiles) setHosts(profiles);
             if (properties) setListings(properties);
             if (bookingsData) setBookings(bookingsData);
             if (payout_requests) setPayouts(payout_requests);
+            if (verificationsData) setVerifications(verificationsData);
 
             const totalRevenue = bookingsData?.reduce((acc: number, curr: any) => acc + (curr.total_price || 0), 0) || 0;
 
@@ -201,6 +209,24 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleVerificationReview = async (userId: string, action: 'approve' | 'reject', rejectionReason?: string) => {
+        try {
+            const { error } = await supabase.rpc('review_identity_verification', {
+                user_id_input: userId,
+                status_input: action === 'approve' ? 'verified' : 'rejected',
+                rejection_reason_input: rejectionReason || null
+            });
+
+            if (error) throw error;
+
+            toast.success(`Verification ${action}d successfully`);
+            fetchData();
+        } catch (err: any) {
+            console.error("Review Error:", err);
+            toast.error(`Failed to ${action} verification`);
+        }
+    };
+
     if (loading || profileLoading) return <div className="flex h-screen items-center justify-center">Loading God Mode...</div>;
     if (!isAdmin) return null;
 
@@ -218,6 +244,7 @@ const AdminDashboard = () => {
                     <MenuButton icon={LayoutDashboard} label="Overview" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
                     <MenuButton icon={Users} label="Hosts & Users" active={activeTab === 'hosts'} onClick={() => setActiveTab('hosts')} />
                     <MenuButton icon={Wallet} label="Payouts" active={activeTab === 'payouts'} onClick={() => setActiveTab('payouts')} />
+                    <MenuButton icon={ShieldCheck} label="Verifications" active={activeTab === 'verifications'} onClick={() => setActiveTab('verifications')} />
                     <MenuButton icon={MessageSquare} label="Messages" active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} />
                     <MenuButton icon={Building2} label="Properties" active={activeTab === 'properties'} onClick={() => setActiveTab('properties')} />
                 </nav>
@@ -459,6 +486,79 @@ const AdminDashboard = () => {
                                 </CardHeader>
                                 <CardContent>
                                     <HostTable hosts={hosts} onBan={handleBanHost} onUpdateStatus={handleUpdateHostStatus} onViewProperties={setSelectedHost} />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {/* VERIFICATIONS TAB */}
+                        <TabsContent value="verifications" className="animate-in fade-in">
+                            <Card className="bg-card border-border text-foreground">
+                                <CardHeader>
+                                    <CardTitle>Pending Identity Verifications</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {verifications.length === 0 ? (
+                                            <div className="text-center py-12 text-muted-foreground">
+                                                <CheckCircle2 className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
+                                                <p>No pending verifications.</p>
+                                            </div>
+                                        ) : verifications.map((v) => (
+                                            <div key={v.id} className="flex flex-col md:flex-row gap-6 p-6 border border-border rounded-2xl bg-muted/20">
+                                                <div className="flex items-center gap-4 min-w-[200px]">
+                                                    <Avatar className="h-16 w-16 rounded-xl border-2 border-border">
+                                                        <AvatarImage src={v.avatar_url} className="object-cover" />
+                                                        <AvatarFallback>{v.full_name?.[0]}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <p className="font-bold text-foreground text-lg">{v.full_name}</p>
+                                                        <p className="text-xs text-muted-foreground font-mono">{v.email}</p>
+                                                        <p className="text-xs text-muted-foreground mt-1">Submitted: {new Date(v.verification_submitted_at).toLocaleDateString()}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex-1 grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <p className="text-[10px] font-bold uppercase text-muted-foreground">ID Document</p>
+                                                        <div className="h-32 bg-background rounded-lg border border-border overflow-hidden relative group">
+                                                            <img src={v.identity_doc_url} className="w-full h-full object-cover" />
+                                                            <a href={v.identity_doc_url} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <ExternalLink className="text-white h-6 w-6" />
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Selfie with ID</p>
+                                                        <div className="h-32 bg-background rounded-lg border border-border overflow-hidden relative group">
+                                                            <img src={v.selfie_url} className="w-full h-full object-cover" />
+                                                            <a href={v.selfie_url} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <ExternalLink className="text-white h-6 w-6" />
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col justify-center gap-2 min-w-[120px]">
+                                                    <Button
+                                                        className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold"
+                                                        onClick={() => handleVerificationReview(v.id, 'approve')}
+                                                    >
+                                                        Approve
+                                                    </Button>
+                                                    <Button
+                                                        variant="destructive"
+                                                        className="font-bold"
+                                                        onClick={() => {
+                                                            const reason = prompt("Enter rejection reason:");
+                                                            if (reason) handleVerificationReview(v.id, 'reject', reason);
+                                                        }}
+                                                    >
+                                                        Reject
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </CardContent>
                             </Card>
                         </TabsContent>

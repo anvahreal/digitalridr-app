@@ -6,17 +6,17 @@ export function Footer() {
 
   const footerLinks = {
     support: [
-      { label: "Help Center", href: "#" },
-      { label: "Safety info", href: "#" },
-      { label: "Cancellations", href: "#" },
+      { label: "Help Center", href: "/learn-more#support" },
+      { label: "Safety info", href: "/learn-more#safety" },
+      { label: "Cancellations", href: "/learn-more#cancellation" },
     ],
     hosting: [
       { label: "Host your home", href: "/host" },
       { label: "Learn More", href: "/learn-more" },
     ],
     about: [
-      { label: "About Us", href: "/learn-more" },
-      { label: "Contact", href: "#" },
+      { label: "About Us", href: "/learn-more#about" },
+      { label: "Contact", href: "/learn-more#support" },
     ],
   };
 

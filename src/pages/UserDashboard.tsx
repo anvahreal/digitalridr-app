@@ -277,6 +277,7 @@ const UserDashboard = () => {
                             open={actionType === 'manage'}
                             onOpenChange={(op: boolean) => !op && setActionType(null)}
                             booking={selectedBooking}
+                            profile={profile}
                             onUpdate={() => window.location.reload()}
                           />
                           <BookingReceipt

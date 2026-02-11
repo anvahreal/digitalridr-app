@@ -32,13 +32,9 @@ const Host = () => {
     {
       icon: DollarSign,
       title: "Earn extra income",
-      description: "Turn your space into a revenue stream. Hosts on Digital Ridr earn an average of $1,200/month.",
+      description: "Turn your space into a revenue stream. Hosts on Digital Ridr earn an average of ₦600,000/month.",
     },
-    {
-      icon: Shield,
-      title: "Host protection",
-      description: "Get $1M in damage protection and $1M in liability insurance included with every booking.",
-    },
+
     {
       icon: Calendar,
       title: "Flexible scheduling",
@@ -215,9 +211,9 @@ const Host = () => {
                 {[
                   "Easy-to-use listing creation tools",
                   "Secure payment processing",
-                  "Guest screening and reviews",
+                  "Guest reviews",
                   "Flexible cancellation policies",
-                  "Smart pricing suggestions",
+
                   "Instant booking option",
                   "Host analytics dashboard",
                 ].map((feature, index) => (

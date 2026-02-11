@@ -18,6 +18,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import AdminDashboard from "./pages/AdminDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import LearnMore from "./pages/LearnMore";
+import VerifyIdentity from "./pages/VerifyIdentity";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/host/edit-listing/:id" element={<CreateListing />} />
               <Route path="/host/dashboard" element={<HostDashboard />} />
               <Route path="/host/messages" element={<MessagingCenter />} />
+              <Route path="/verify-identity" element={<VerifyIdentity />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/host" element={<Host />} />
               <Route path="/checkout" element={<Checkout />} />

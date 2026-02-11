@@ -218,8 +218,19 @@ const HostDashboard = () => {
                           {bookings.filter(b => b.status === "pending").map(b => (
                             <div key={b.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-background/60 p-4 rounded-2xl gap-4 border border-amber-500/10">
                               <div className="flex items-center gap-4 w-full sm:w-auto">
-                                <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center text-amber-600 font-black text-lg shrink-0 shadow-sm">
-                                  {b.guest_id?.slice(0, 1).toUpperCase() || "?"}
+                                <div className="relative">
+                                  <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center text-amber-600 font-black text-lg shrink-0 shadow-sm overflow-hidden">
+                                    {b.profiles?.avatar_url ? (
+                                      <img src={b.profiles.avatar_url} className="w-full h-full object-cover" />
+                                    ) : (
+                                      b.guest_id?.slice(0, 1).toUpperCase() || "?"
+                                    )}
+                                  </div>
+                                  {b.profiles?.verification_status === 'verified' && (
+                                    <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-0.5 rounded-full border-2 border-background" title="Verified Guest">
+                                      <ShieldCheck className="h-3 w-3" />
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="min-w-0">
                                   <p className="font-bold text-foreground text-sm truncate">{b.listing?.title || "Unknown Listing"}</p>
