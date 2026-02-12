@@ -49,12 +49,11 @@ const Auth = () => {
         });
         if (error) throw error;
 
-        // Success: Sign out immediately to force manual login
-        await supabase.auth.signOut();
+        // Success: Redirect to Verification immediately
+        // await supabase.auth.signOut(); // Removed to allow auto-login
 
-        toast.success("Account created successfully! Please log in to continue.");
-        setIsLogin(true); // Switch back to login form
-        setFormData(prev => ({ ...prev, password: "" })); // Clear password for security
+        toast.success("Account created! Let's verify your identity.");
+        navigate("/verify-identity");
       }
     } catch (error: any) {
       console.error(error);

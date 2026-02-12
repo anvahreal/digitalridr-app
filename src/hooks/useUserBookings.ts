@@ -15,7 +15,12 @@ export interface Booking {
     listings: {
         title: string;
         location: string;
+        address?: string;
         images: string[];
+        wifi_name?: string;
+        wifi_password?: string;
+        access_code?: string;
+        check_in_instructions?: string;
     };
 }
 
@@ -33,10 +38,15 @@ export const useUserBookings = () => {
                     .from('bookings')
                     .select(`
             *,
-            listings (
+            listings:listings!listing_id (
               title,
               location,
-              images
+              address,
+              images,
+              wifi_name,
+              wifi_password,
+              access_code,
+              check_in_instructions
             )
           `)
                     .eq('guest_id', user.id)
@@ -44,8 +54,9 @@ export const useUserBookings = () => {
 
                 if (error) throw error;
                 setBookings(data || []);
-            } catch (err) {
+            } catch (err: any) {
                 console.error('Error fetching user bookings:', err);
+                toast.error("Booking Error: " + (err.message || "Unknown"));
             } finally {
                 setLoading(false);
             }

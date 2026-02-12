@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/lib/supabase";
 import { Search, Menu, User, Globe, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -18,6 +19,7 @@ import { ModeToggle } from "@/components/ModeToggle";
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, profile } = useProfile();
 
   useEffect(() => {
@@ -172,7 +174,11 @@ export function Header() {
               {user && (
                 <DropdownMenuItem
                   className="rounded-xl focus:bg-red-50 focus:text-red-600 py-2 text-red-500 font-bold cursor-pointer"
-                  onClick={() => supabase.auth.signOut()}
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    navigate("/");
+                    toast.info("Logged out successfully");
+                  }}
                 >
                   Log out
                 </DropdownMenuItem>

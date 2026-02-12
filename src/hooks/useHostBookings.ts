@@ -37,24 +37,11 @@ export function useHostBookings() {
         try {
             setLoading(true);
 
-            const { data: listings, error: listingsError } = await supabase
-                .from('listings')
-                .select('id')
-                .eq('host_id', user.id);
-
-            if (listingsError) throw listingsError;
-
-            const listingIds = listings.map(l => l.id);
-
-            if (listingIds.length === 0) {
-                setBookings([]);
-                return;
-            }
-
+            // NEW APPROACH: Query directly by host_id (made possible by new RLS and FKs)
             const { data: bookingsData, error: bookingsError } = await supabase
                 .from('bookings')
-                .select('*, listing:listings(title), profiles:guest_id(full_name, avatar_url, verification_status)')
-                .in('listing_id', listingIds)
+                .select('*, listing:listings(title, images), profiles:guest_id(full_name, avatar_url, verification_status)')
+                .eq('host_id', user.id)
                 .order('created_at', { ascending: false });
 
             if (bookingsError) throw bookingsError;

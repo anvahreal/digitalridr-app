@@ -28,7 +28,7 @@ import {
   Bell,
   Shield
 } from "lucide-react";
-import { formatNaira } from "@/lib/utils";
+import { formatNaira, cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -99,6 +99,11 @@ const UserDashboard = () => {
     navigate('/auth');
   }
 
+  const handleManageBooking = (booking: any) => {
+    setSelectedBooking(booking);
+    setActionType('manage');
+  };
+
   return (
     <div className="min-h-screen bg-background font-sans transition-colors duration-300">
       <Header />
@@ -129,14 +134,14 @@ const UserDashboard = () => {
                   <button
                     key={nav.id}
                     onClick={() => setActiveTab(nav.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === nav.id
-                      ? "bg-card text-[#F48221] shadow-sm shadow-orange-500/10 dark:shadow-none"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                      }`}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 font-bold text-sm",
+                      activeTab === nav.id
+                        ? "bg-foreground text-background shadow-lg scale-105"
+                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    )}
                   >
-                    <nav.icon
-                      className={`h-4 w-4 ${activeTab === nav.id ? "text-[#F48221]" : ""}`}
-                    />
+                    <nav.icon className={cn("h-4 w-4", activeTab === nav.id ? "text-[#F48221]" : "opacity-70")} />
                     {nav.label}
                   </button>
                 ))}
@@ -152,143 +157,166 @@ const UserDashboard = () => {
               </button>
             </aside>
 
-            {/* Main Section */}
-            <div className="space-y-6">
-              {/* Mobile Nav Tabs */}
-              <Tabs
-                value={activeTab}
-                onValueChange={setActiveTab}
-                className="lg:hidden mb-6"
-              >
-                <TabsList className="grid w-full grid-cols-4 bg-muted p-1 rounded-xl">
-                  <TabsTrigger
-                    value="trips"
-                    className="rounded-lg font-bold text-[11px] data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground"
+            {/* Mobile Nav (Horizontal Scroll) */}
+            <div className="block lg:hidden overflow-x-auto pb-4 -mx-4 px-4 no-scrollbar">
+              <div className="flex gap-2 min-w-max">
+                {[
+                  { id: "trips", label: "Trips", icon: Calendar },
+                  { id: "favorites", label: "Saved", icon: Heart },
+                  { id: "profile", label: "User", icon: User },
+                  { id: "settings", label: "Settings", icon: Settings },
+                ].map((nav) => (
+                  <button
+                    key={nav.id}
+                    onClick={() => setActiveTab(nav.id)}
+                    className={cn(
+                      "flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all duration-300 font-bold text-xs whitespace-nowrap",
+                      activeTab === nav.id
+                        ? "bg-foreground border-foreground text-background shadow-md"
+                        : "bg-background border-border text-muted-foreground"
+                    )}
                   >
-                    Stays
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="favorites"
-                    className="rounded-lg font-bold text-[11px] data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground"
-                  >
-                    Saved
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="profile"
-                    className="rounded-lg font-bold text-[11px] data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground"
-                  >
-                    User
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="settings"
-                    className="rounded-lg font-bold text-[11px] data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground"
-                  >
-                    Setup
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+                    <nav.icon className={cn("h-3.5 w-3.5", activeTab === nav.id ? "text-[#F48221]" : "opacity-50")} />
+                    {nav.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
+            {/* Main Section */}
+            <div className="space-y-8">
               {/* TRIPS TAB */}
               {activeTab === "trips" && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                  <Tabs defaultValue="upcoming" className="w-full">
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-black text-foreground">
-                        My Bookings
-                      </h2>
-                      <TabsList className="bg-transparent gap-4 p-0">
-                        <TabsTrigger
-                          value="upcoming"
-                          className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-full px-5 h-9 text-xs font-bold text-muted-foreground"
-                        >
-                          Upcoming
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="past"
-                          className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-full px-5 h-9 text-xs font-bold text-muted-foreground"
-                        >
-                          Past
-                        </TabsTrigger>
-                      </TabsList>
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-black text-foreground">My Bookings</h2>
+                    <div className="flex bg-muted p-1 rounded-xl">
+                      <button className="px-4 py-1.5 rounded-lg bg-background shadow-sm text-xs font-bold text-foreground transition-all">Upcoming</button>
+                      <button className="px-4 py-1.5 rounded-lg text-xs font-bold text-muted-foreground hover:text-foreground transition-all">Past</button>
                     </div>
+                  </div>
 
-                    <TabsContent value="upcoming" className="space-y-4">
-                      {bookingsLoading ? <div className="text-muted-foreground">Loading...</div> : bookings
-                        .filter((b) => b.status === "confirmed" || b.status === "pending")
-                        .map((booking) => (
-                          <div
-                            key={booking.id}
-                            onClick={() => { setSelectedBooking(booking); setActionType('manage'); }}
-                            className="group flex gap-4 cursor-pointer border-b border-border/40 pb-6 last:border-0 last:pb-0 hover:bg-muted/20 -mx-4 px-4 py-4 sm:mx-0 sm:px-0 sm:py-0 sm:hover:bg-transparent transition-colors"
-                          >
-                            {/* Image */}
-                            <div className="relative h-24 w-24 sm:h-40 sm:w-64 shrink-0 overflow-hidden rounded-xl bg-muted">
-                              <img
-                                src={booking.listings?.images?.[0] || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"}
-                                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                alt=""
-                              />
-                              <div className="absolute top-2 left-2">
-                                {getStatusBadge(booking.status)}
+                  {bookingsLoading ? (
+                    <div className="space-y-4">
+                      {[1, 2].map(i => (
+                        <div key={i} className="h-40 bg-muted/50 rounded-3xl animate-pulse" />
+                      ))}
+                    </div>
+                  ) : bookings.length === 0 ? (
+                    <div className="text-center py-12 bg-card rounded-3xl border border-dashed border-border">
+                      <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Calendar className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <h3 className="font-bold text-foreground mb-1">No trips booked... yet!</h3>
+                      <p className="text-xs text-muted-foreground mb-4">Time to dust off your bags and start planning your next adventure</p>
+                      <Button onClick={() => navigate('/')} className="rounded-xl px-6 font-bold bg-[#F48221] hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20">
+                        Start Searching
+                      </Button>
+                    </div>
+                  ) : (
+                    bookings.filter(b => b.status === "confirmed" || b.status === "pending").map((booking) => (
+                      <div
+                        key={booking.id}
+                        className="group bg-card border border-border/50 hover:border-primary/20 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
+                      >
+                        <div className="flex flex-col md:flex-row">
+                          <div className="w-full md:w-48 h-48 md:h-auto relative shrink-0">
+                            <img
+                              src={booking.listings?.images?.[0]}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:hidden" />
+                            <div className="absolute bottom-3 left-3 md:hidden text-white">
+                              <p className="font-bold text-lg leading-none">{booking.listings?.title}</p>
+                              <p className="text-xs opacity-90">{booking.listings?.location}</p>
+                            </div>
+                          </div>
+                          <div className="p-5 md:p-6 flex-1 flex flex-col justify-between">
+                            <div>
+                              <div className="flex justify-between items-start mb-1 hidden md:flex">
+                                <div>
+                                  <h3 className="font-black text-lg text-foreground line-clamp-1">{booking.listings?.title}</h3>
+                                  <p className="text-xs font-bold text-muted-foreground">{booking.listings?.location}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-0.5">Booking Ref</p>
+                                  <p className="text-xs font-mono font-bold text-foreground bg-muted px-2 py-0.5 rounded-md select-all">
+                                    {booking.id.split('-')[0].toUpperCase()}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4 mt-4 md:mt-2 bg-muted/30 p-3 rounded-2xl border border-border/50">
+                                <div>
+                                  <p className="text-[10px] font-bold uppercase text-muted-foreground mb-0.5">Check-in</p>
+                                  <div className="flex items-center gap-1.5 font-bold text-sm text-foreground">
+                                    <Calendar className="h-3.5 w-3.5 text-[#F48221]" />
+                                    {format(new Date(booking.check_in), "EEE, MMM d")}
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-bold uppercase text-muted-foreground mb-0.5">Check-out</p>
+                                  <div className="flex items-center gap-1.5 font-bold text-sm text-foreground">
+                                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                    {format(new Date(booking.check_out), "EEE, MMM d")}
+                                  </div>
+                                </div>
                               </div>
                             </div>
 
-                            {/* Content */}
-                            <div className="flex-1 py-1 flex flex-col justify-between">
-                              <div>
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <h3 className="font-bold text-foreground text-sm sm:text-lg mb-1">
-                                      {booking.listings?.location?.split(',')[0] || "Unknown Location"}
-                                    </h3>
-                                    <p className="text-muted-foreground text-xs sm:text-sm line-clamp-1 mb-1">
-                                      {booking.listings?.title}
-                                    </p>
-                                  </div>
-                                  <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {format(new Date(booking.check_in), "MMM d")} - {format(new Date(booking.check_out), "MMM d")} • {booking.guests} guests
-                                </p>
+                            <div className="mt-2 flex items-center justify-between">
+                              <div className="flex gap-2">
+                                {booking.status === 'confirmed' && (
+                                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+                                    {booking.payment_status === 'paid' ? 'Paid' : 'Confirmed'}
+                                  </Badge>
+                                )}
+                                {booking.status === 'pending' && (
+                                  <Badge variant="secondary" className="font-normal text-xs bg-orange-100 text-orange-700">Pending approval</Badge>
+                                )}
                               </div>
-
-                              <div className="mt-2 flex items-center justify-between">
-                                <div className="flex gap-2">
-                                  {booking.status === 'confirmed' && (
-                                    <Button size="sm" variant="outline" className="h-7 text-xs rounded-full border-foreground text-foreground hover:bg-foreground hover:text-background font-bold">
-                                      Show details
-                                    </Button>
-                                  )}
-                                  {booking.status === 'pending' && (
-                                    <Badge variant="secondary" className="font-normal text-xs bg-orange-100 text-orange-700">Pending approval</Badge>
-                                  )}
-                                </div>
+                              <div className="flex items-center gap-3">
                                 <span className="font-bold text-sm sm:text-base text-foreground">
                                   {formatNaira(booking.total_price)}
                                 </span>
+                                {booking.status === 'confirmed' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleManageBooking(booking)}
+                                    className="h-8 rounded-xl font-bold text-xs"
+                                  >
+                                    View Details
+                                  </Button>
+                                )}
                               </div>
                             </div>
-                          </div>
-                        ))}
 
-                      {selectedBooking && (
-                        <>
-                          <ManageBookingDialog
-                            open={actionType === 'manage'}
-                            onOpenChange={(op: boolean) => !op && setActionType(null)}
-                            booking={selectedBooking}
-                            profile={profile}
-                            onUpdate={() => window.location.reload()}
-                          />
-                          <BookingReceipt
-                            open={actionType === 'receipt'}
-                            onOpenChange={(op: boolean) => !op && setActionType(null)}
-                            booking={selectedBooking}
-                          />
-                        </>
-                      )}
-                    </TabsContent>
-                  </Tabs>
+                            {/* CHECK-IN INSTRUCTIONS - Moved to 'Show details' dialog */}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+
+                  {/* RESTORED: Booking Management Dialogs */}
+                  {selectedBooking && (
+                    <>
+                      <ManageBookingDialog
+                        open={actionType === 'manage'}
+                        onOpenChange={(op: boolean) => !op && setActionType(null)}
+                        booking={selectedBooking}
+                        profile={profile}
+                        onUpdate={() => window.location.reload()}
+                      />
+                      <BookingReceipt
+                        open={actionType === 'receipt'}
+                        onOpenChange={(op: boolean) => !op && setActionType(null)}
+                        booking={selectedBooking}
+                      />
+                    </>
+                  )}
                 </div>
               )}
 
@@ -368,8 +396,8 @@ const UserDashboard = () => {
 
               {/* PROFILE TAB */}
               {activeTab === "profile" && (
-                <Card className="border-none shadow-sm rounded-3xl bg-card p-8 animate-in fade-in zoom-in-95">
-                  <div className="flex items-center gap-6 mb-8">
+                <Card className="border-none shadow-sm rounded-3xl bg-card p-6 md:p-8 animate-in fade-in zoom-in-95">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8 text-center md:text-left">
                     <div className="h-24 w-24 bg-orange-100 dark:bg-orange-900/20 rounded-3xl flex items-center justify-center overflow-hidden shrink-0">
                       {profile?.avatar_url ? (
                         <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
@@ -377,13 +405,19 @@ const UserDashboard = () => {
                         <User className="h-12 w-12 text-[#F48221]" />
                       )}
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h2 className="text-2xl font-black text-foreground">
                         {loading ? "Loading..." : (profile?.full_name || "Guest User")}
                       </h2>
-                      <p className="text-muted-foreground font-medium">
+                      <p className="text-muted-foreground font-medium mb-2">
                         Member since {user?.created_at ? new Date(user.created_at).getFullYear() : "..."} • Lagos, Nigeria
                       </p>
+                      <Badge variant="outline" className={cn(
+                        "rounded-full px-3 py-0.5 text-[10px] border-border uppercase tracking-widest",
+                        profile?.is_verified ? "text-emerald-500 border-emerald-500/20 bg-emerald-500/5" : "text-muted-foreground"
+                      )}>
+                        {profile?.is_verified ? "Verified Guest" : "Standard Guest"}
+                      </Badge>
                     </div>
                   </div>
                   <div className="space-y-4">

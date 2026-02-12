@@ -211,6 +211,52 @@ const AdminDashboard = () => {
 
     const handleVerificationReview = async (userId: string, action: 'approve' | 'reject', rejectionReason?: string) => {
         try {
+            // IF APPROVING: Automatically set their "Selfie" as their public "Avatar"
+            if (action === 'approve') {
+                const verification = verifications.find(v => v.id === userId);
+                if (verification?.selfie_url) {
+                    try {
+                        const selfiePath = verification.selfie_url;
+                        toast.info("Setting up user avatar...");
+
+                        // 1. Download private selfie
+                        const { data: blob, error: downloadError } = await supabase.storage
+                            .from('secure-documents')
+                            .download(selfiePath);
+
+                        if (downloadError) throw downloadError;
+
+                        // 2. Upload to public avatars bucket
+                        const avatarPath = `${userId}/avatar-${Date.now()}.png`; // Unique name
+                        const { error: uploadError } = await supabase.storage
+                            .from('avatars')
+                            .upload(avatarPath, blob, {
+                                contentType: 'image/png',
+                                upsert: true
+                            });
+
+                        if (uploadError) throw uploadError;
+
+                        // 3. Get Public URL
+                        const { data: publicData } = supabase.storage
+                            .from('avatars')
+                            .getPublicUrl(avatarPath);
+
+                        // 4. Update Profile with new Avatar URL
+                        await supabase
+                            .from('profiles')
+                            .update({ avatar_url: publicData.publicUrl })
+                            .eq('id', userId);
+
+                        console.log("Avatar updated from selfie:", publicData.publicUrl);
+
+                    } catch (avatarError) {
+                        console.error("Failed to copy selfie to avatar:", avatarError);
+                        toast.warning("Verification approved, but failed to update avatar.");
+                    }
+                }
+            }
+
             const { error } = await supabase.rpc('review_identity_verification', {
                 user_id_input: userId,
                 status_input: action === 'approve' ? 'verified' : 'rejected',
@@ -223,7 +269,7 @@ const AdminDashboard = () => {
             fetchData();
         } catch (err: any) {
             console.error("Review Error:", err);
-            toast.error(`Failed to ${action} verification`);
+            toast.error(`Failed to ${action} verification: ${err.message || err.error_description || "Unknown error"}`);
         }
     };
 
@@ -521,19 +567,13 @@ const AdminDashboard = () => {
                                                     <div className="space-y-2">
                                                         <p className="text-[10px] font-bold uppercase text-muted-foreground">ID Document</p>
                                                         <div className="h-32 bg-background rounded-lg border border-border overflow-hidden relative group">
-                                                            <img src={v.identity_doc_url} className="w-full h-full object-cover" />
-                                                            <a href={v.identity_doc_url} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <ExternalLink className="text-white h-6 w-6" />
-                                                            </a>
+                                                            <SecureImage path={v.identity_doc_url} alt="ID Document" className="w-full h-full object-cover" />
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2">
                                                         <p className="text-[10px] font-bold uppercase text-muted-foreground">Selfie with ID</p>
                                                         <div className="h-32 bg-background rounded-lg border border-border overflow-hidden relative group">
-                                                            <img src={v.selfie_url} className="w-full h-full object-cover" />
-                                                            <a href={v.selfie_url} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <ExternalLink className="text-white h-6 w-6" />
-                                                            </a>
+                                                            <SecureImage path={v.selfie_url} alt="Selfie" className="w-full h-full object-cover" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -719,6 +759,37 @@ const MenuButton = ({ icon: Icon, label, active, onClick }: any) => (
         {label}
     </button>
 );
+
+const SecureImage = ({ path, alt, className }: { path: string, alt: string, className?: string }) => {
+    const [src, setSrc] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!path) return;
+
+        // If it's already a full URL (legacy), use it. Otherwise generate signed URL.
+        if (path.startsWith('http')) {
+            setSrc(path);
+            return;
+        }
+
+        const fetchSignedUrl = async () => {
+            const { data } = await supabase.storage.from('secure-documents').createSignedUrl(path, 3600); // 1 hour expiry
+            if (data?.signedUrl) setSrc(data.signedUrl);
+        };
+        fetchSignedUrl();
+    }, [path]);
+
+    if (!src) return <div className={`bg-muted animate-pulse ${className}`} />;
+
+    return (
+        <div className="relative group w-full h-full">
+            <img src={src} alt={alt} className={className} />
+            <a href={src} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <ExternalLink className="text-white h-6 w-6" />
+            </a>
+        </div>
+    );
+};
 
 const AnalyticsStatsCard = ({ title, value, icon: Icon, trend, trendUp, color }: any) => (
     <Card className="bg-card border-border overflow-hidden relative group hover:shadow-lg transition-all">

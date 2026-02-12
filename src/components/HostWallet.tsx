@@ -116,59 +116,60 @@ const HostWallet = () => {
         <div className="p-6 border-b border-border">
           <h3 className="font-black text-lg text-foreground">Recent Activity</h3>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <tbody className="divide-y divide-border">
-              {loading ? (
-                <tr><td colSpan={2} className="p-6 text-center text-muted-foreground">Loading transactions...</td></tr>
-              ) : bookings.length === 0 ? (
-                <tr><td colSpan={2} className="p-6 text-center text-muted-foreground">No transactions yet.</td></tr>
-              ) : bookings.map((tx: any) => (
-                <tr key={tx.id} className="hover:bg-muted/40 transition-colors cursor-default">
-                  <td className="px-6 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${tx.status === "confirmed" || tx.status === "completed" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}`}>
-                        {tx.status === "confirmed" || tx.status === "completed" ? <ArrowDownLeft size={14} /> : <Clock size={14} />}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground">Booking: {tx.listing?.title || "Unknown Listing"}</p>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase">{new Date(tx.created_at).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    <div className="flex justify-end items-center gap-2">
-                      <p className={`font-black text-sm ${tx.status === "confirmed" || tx.status === "completed" ? "text-emerald-600" : "text-foreground"}`}>
-                        +{formatNaira(tx.total_price)}
-                      </p>
-                      <Badge variant="outline" className={`rounded-full border-none text-[8px] font-black uppercase ${tx.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-700' :
-                        tx.status === 'pending' ? 'bg-amber-500/10 text-amber-700' :
-                          'bg-muted text-muted-foreground'
-                        }`}>
-                        {tx.status}
-                      </Badge>
-                    </div>
-                    {tx.status === 'pending' && (
-                      <div className="flex justify-end gap-2 mt-2">
-                        <button
-                          onClick={() => handleAction(tx.id, 'confirmed')}
-                          className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold rounded-full transition-colors"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => handleAction(tx.id, 'cancelled')}
-                          className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold rounded-full transition-colors"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex flex-col">
+          {loading ? (
+            <div className="p-8 text-center text-muted-foreground">Loading transactions...</div>
+          ) : bookings.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">No transactions yet.</div>
+          ) : bookings.map((tx: any) => (
+            <div key={tx.id} className="p-4 md:p-6 border-b border-border/50 last:border-none hover:bg-muted/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+
+              {/* LEFT: Icon + Details */}
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-full shrink-0 ${tx.status === "confirmed" || tx.status === "completed" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}`}>
+                  {tx.status === "confirmed" || tx.status === "completed" ? <ArrowDownLeft size={18} /> : <Clock size={18} />}
+                </div>
+                <div>
+                  <p className="text-sm md:text-base font-bold text-foreground">Booking: {tx.listing?.title || "Unknown Listing"}</p>
+                  <p className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase">{new Date(tx.created_at).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              {/* RIGHT: Price + Status + Actions */}
+              <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto pl-14 sm:pl-0">
+                <div className="flex flex-row items-center justify-between sm:justify-end gap-3 w-full">
+                  <p className={`font-black text-sm md:text-base ${tx.status === "confirmed" || tx.status === "completed" ? "text-emerald-600" : "text-foreground"}`}>
+                    +{formatNaira(tx.total_price)}
+                  </p>
+                  <Badge variant="outline" className={`rounded-full border-none text-[9px] font-black uppercase px-2 py-0.5 ${tx.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-700' :
+                    tx.status === 'pending' ? 'bg-amber-500/10 text-amber-700' :
+                      'bg-muted text-muted-foreground'
+                    }`}>
+                    {tx.status}
+                  </Badge>
+                </div>
+
+                {/* Actions Row */}
+                {tx.status === 'pending' && (
+                  <div className="flex justify-start sm:justify-end gap-3 mt-1 w-full">
+                    <button
+                      onClick={() => handleAction(tx.id, 'confirmed')}
+                      className="flex-1 sm:flex-none px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold rounded-xl transition-colors shadow-sm"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => handleAction(tx.id, 'cancelled')}
+                      className="flex-1 sm:flex-none px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold rounded-xl transition-colors shadow-sm"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          ))}
         </div>
       </Card>
     </div>

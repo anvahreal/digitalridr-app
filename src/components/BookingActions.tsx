@@ -76,19 +76,32 @@ export const ManageBookingDialog = ({ booking, open, onOpenChange, onUpdate, pro
                                         <div>
                                             <p className="text-xs font-bold text-emerald-800 uppercase">Exact Location</p>
                                             <p className="text-sm font-medium text-emerald-900">{booking.listings?.location}</p>
-                                            <p className="text-xs text-emerald-700 mt-1">Plot 5, Block 2 (Sample Full Address)</p>
+                                            <p className="text-xs text-emerald-700 mt-1">{booking.listings?.address || "Address available on check-in day"}</p>
                                         </div>
                                     </div>
-                                    <div className="pt-2 border-t border-emerald-200/50 flex gap-4">
+                                    <div className="pt-2 border-t border-emerald-200/50 flex flex-wrap gap-4">
                                         <div>
                                             <p className="text-xs font-bold text-emerald-800 uppercase">Access Code</p>
-                                            <p className="text-lg font-black text-emerald-900 tracking-widest">8055</p>
+                                            <p className="text-lg font-black text-emerald-900 tracking-widest font-mono">
+                                                {booking.listings?.access_code || "N/A"}
+                                            </p>
                                         </div>
                                         <div>
                                             <p className="text-xs font-bold text-emerald-800 uppercase">Wifi Password</p>
-                                            <p className="text-sm font-medium text-emerald-900">Guest@2024</p>
+                                            <p className="text-sm font-medium text-emerald-900 select-all">
+                                                {booking.listings?.wifi_password || "N/A"}
+                                            </p>
+                                            {booking.listings?.wifi_name && (
+                                                <p className="text-[10px] text-emerald-800/70 mt-0.5">SSID: {booking.listings?.wifi_name}</p>
+                                            )}
                                         </div>
                                     </div>
+                                    {booking.listings?.check_in_instructions && (
+                                        <div className="pt-2 border-t border-emerald-200/50">
+                                            <p className="text-xs font-bold text-emerald-800 uppercase">Notes</p>
+                                            <p className="text-xs text-emerald-900 italic mt-1">"{booking.listings?.check_in_instructions}"</p>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="bg-slate-50 border border-slate-200 p-5 rounded-xl text-center space-y-3">
@@ -131,7 +144,7 @@ export const ManageBookingDialog = ({ booking, open, onOpenChange, onUpdate, pro
                     )}
                 </DialogFooter>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 };
 

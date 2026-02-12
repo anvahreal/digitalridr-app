@@ -7,7 +7,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/lib/supabase";
 import {
   ChevronLeft, Camera, MapPin, Search,
-  CheckCircle2, Plus, Minus, Home, Sparkles, Loader2, X, Play, Video
+  CheckCircle2, Plus, Minus, Home, Sparkles, Loader2, X, Play, Video,
+  Check, ChevronsUpDown
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatNaira } from "@/lib/utils";
@@ -19,6 +20,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
 const LAGOS_DISTRICTS = [
@@ -43,6 +58,7 @@ const CreateListing = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(!!id);
+  const [openDistrict, setOpenDistrict] = useState(false);
   const totalSteps = 3;
 
   // Form State
@@ -58,9 +74,12 @@ const CreateListing = () => {
     amenities: [] as string[],
     house_rules: "", // Added house rules
     images: [] as string[], // Stores public URLs
-    images: [] as string[], // Stores public URLs
     video_url: "",
     security_deposit: "", // Added security deposit
+    wifi_name: "",
+    wifi_password: "",
+    access_code: "",
+    check_in_instructions: "",
   });
 
   const [uploading, setUploading] = useState(false);
@@ -93,6 +112,11 @@ const CreateListing = () => {
             images: data.images || [],
             video_url: data.video_url || "",
             security_deposit: data.security_deposit ? data.security_deposit.toString() : "",
+            house_rules: Array.isArray(data.house_rules) ? data.house_rules.join('\n') : (data.house_rules || ""),
+            wifi_name: data.wifi_name || "",
+            wifi_password: data.wifi_password || "",
+            access_code: data.access_code || "",
+            check_in_instructions: data.check_in_instructions || "",
           });
         }
       } catch (err: any) {
@@ -200,9 +224,12 @@ const CreateListing = () => {
         city: "Lagos",
         country: "Nigeria",
         video_url: formData.video_url,
-        video_url: formData.video_url,
         host_id: user.id,
         security_deposit: securityDepositValue,
+        wifi_name: formData.wifi_name,
+        wifi_password: formData.wifi_password,
+        access_code: formData.access_code,
+        check_in_instructions: formData.check_in_instructions,
       };
 
       if (isEditMode) {
@@ -345,19 +372,49 @@ const CreateListing = () => {
                 <div className="grid grid-cols-1 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">District</label>
-                    <Select
-                      value={formData.location}
-                      onValueChange={(val) => handleInputChange("location", val)}
-                    >
-                      <SelectTrigger className="w-full h-14 bg-muted border-none rounded-2xl px-4 font-bold text-foreground">
-                        <SelectValue placeholder="Select District" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {LAGOS_DISTRICTS.map((dict) => (
-                          <SelectItem key={dict} value={dict} className="font-medium">{dict}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={openDistrict} onOpenChange={setOpenDistrict}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openDistrict}
+                          className="w-full h-14 justify-between bg-muted border-none rounded-2xl px-4 font-bold text-foreground hover:bg-muted/80"
+                        >
+                          {formData.location
+                            ? LAGOS_DISTRICTS.find((dict) => dict === formData.location)
+                            : "Select District..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search district..." />
+                          <CommandList>
+                            <CommandEmpty>No district found.</CommandEmpty>
+                            <CommandGroup>
+                              {LAGOS_DISTRICTS.map((dict) => (
+                                <CommandItem
+                                  key={dict}
+                                  value={dict}
+                                  onSelect={() => {
+                                    handleInputChange("location", dict);
+                                    setOpenDistrict(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      formData.location === dict ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {dict}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <FormInput
@@ -406,7 +463,7 @@ const CreateListing = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <header>
                 <h1 className="text-3xl font-black text-foreground tracking-tighter">Space Details</h1>
-                <p className="text-muted-foreground font-medium text-sm">Define the capacity of your property.</p>
+                <p className="text-muted-foreground font-medium text-sm">Define the capacity and check-in details.</p>
               </header>
 
               <div className="grid grid-cols-1 gap-4">
@@ -414,6 +471,44 @@ const CreateListing = () => {
                 <Counter label="Bathrooms" value={formData.bathrooms} onChange={(v) => handleInputChange("bathrooms", v)} />
                 <Counter label="Max Guests" value={formData.guests} onChange={(v) => handleInputChange("guests", v)} />
               </div>
+
+              {/* CHECK-IN INFO (New Section) */}
+              <div className="bg-card border border-border rounded-[2rem] p-6 space-y-4">
+                <h3 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1 flex items-center gap-2">
+                  <span className="bg-emerald-500/10 text-emerald-600 p-1 rounded-md">Guest Access</span>
+                  (Visible only after booking)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormInput
+                    label="Wifi Name (SSID)"
+                    placeholder="e.g. Luxury_Guest"
+                    value={formData.wifi_name}
+                    onChange={(e: any) => handleInputChange("wifi_name", e.target.value)}
+                  />
+                  <FormInput
+                    label="Wifi Password"
+                    placeholder="e.g. Guest@2024"
+                    value={formData.wifi_password}
+                    onChange={(e: any) => handleInputChange("wifi_password", e.target.value)}
+                  />
+                  <FormInput
+                    label="Access Code / Key Box"
+                    placeholder="e.g. 1234 or Lobby"
+                    value={formData.access_code}
+                    onChange={(e: any) => handleInputChange("access_code", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">Special Check-in Instructions</label>
+                  <Textarea
+                    placeholder="e.g. The key is under the mat, gate code is *777#..."
+                    className="min-h-[80px] bg-muted border-none rounded-2xl p-4 font-medium text-foreground resize-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                    value={formData.check_in_instructions}
+                    onChange={(e: any) => handleInputChange("check_in_instructions", e.target.value)}
+                  />
+                </div>
+              </div>
+
 
               <div className="space-y-4">
                 <h3 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Key Amenities</h3>

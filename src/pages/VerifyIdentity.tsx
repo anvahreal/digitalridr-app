@@ -54,11 +54,8 @@ const VerifyIdentity = () => {
             throw uploadError;
         }
 
-        const { data } = supabase.storage
-            .from('secure-documents')
-            .getPublicUrl(filePath);
-
-        return data.publicUrl;
+        // Return the path, NOT the public URL (since bucket is private)
+        return filePath;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -81,12 +78,12 @@ const VerifyIdentity = () => {
             // 1. Upload ID
             console.log("Uploading ID...");
             const idUrl = await uploadFile(idFile, `${user.id}/identity`);
-            console.log("ID Uploaded:", idUrl);
+            console.log("ID Path:", idUrl);
 
             // 2. Upload Selfie
             console.log("Uploading Selfie...");
             const selfieUrl = await uploadFile(selfieFile, `${user.id}/selfie`);
-            console.log("Selfie Uploaded:", selfieUrl);
+            console.log("Selfie Path:", selfieUrl);
 
             // 3. Update Profile via RPC
             console.log("Calling RPC submit_identity_verification...");
@@ -168,10 +165,14 @@ const VerifyIdentity = () => {
                         <div className="mx-auto h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                             <Shield className="h-6 w-6 text-primary" />
                         </div>
-                        <h1 className="text-2xl font-bold">Verify Your Identity</h1>
+                        <h1 className="text-2xl font-bold">Welcome to Digital Ridr!</h1>
                         <p className="text-muted-foreground text-sm">
-                            To ensure safety for everyone on Digital Ridr, we need to verify your identity before you can check in.
+                            Let's get you verified so you can book stays instantly. <br />
+                            This helps keep our community safe.
                         </p>
+                        <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-xs text-muted-foreground hover:text-foreground">
+                            Skip for now (I'll do this later)
+                        </Button>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-8">

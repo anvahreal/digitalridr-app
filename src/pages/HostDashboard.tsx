@@ -216,35 +216,37 @@ const HostDashboard = () => {
                         </div>
                         <div className="space-y-3">
                           {bookings.filter(b => b.status === "pending").map(b => (
-                            <div key={b.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-background/60 p-4 rounded-2xl gap-4 border border-amber-500/10">
-                              <div className="flex items-center gap-4 w-full sm:w-auto">
-                                <div className="relative">
-                                  <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center text-amber-600 font-black text-lg shrink-0 shadow-sm overflow-hidden">
-                                    {b.profiles?.avatar_url ? (
-                                      <img src={b.profiles.avatar_url} className="w-full h-full object-cover" />
-                                    ) : (
-                                      b.guest_id?.slice(0, 1).toUpperCase() || "?"
+                            <div key={b.id} className="flex flex-col bg-background/60 p-4 rounded-2xl gap-4 border border-amber-500/10">
+                              <div className="flex flex-col sm:flex-row justify-between items-start gap-4 w-full">
+                                <div className="flex items-center gap-4">
+                                  <div className="relative">
+                                    <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center text-amber-600 font-black text-lg shrink-0 shadow-sm overflow-hidden">
+                                      {b.profiles?.avatar_url ? (
+                                        <img src={b.profiles.avatar_url} className="w-full h-full object-cover" />
+                                      ) : (
+                                        b.guest_id?.slice(0, 1).toUpperCase() || "?"
+                                      )}
+                                    </div>
+                                    {b.profiles?.verification_status === 'verified' && (
+                                      <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-0.5 rounded-full border-2 border-background" title="Verified Guest">
+                                        <ShieldCheck className="h-3 w-3" />
+                                      </div>
                                     )}
                                   </div>
-                                  {b.profiles?.verification_status === 'verified' && (
-                                    <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-0.5 rounded-full border-2 border-background" title="Verified Guest">
-                                      <ShieldCheck className="h-3 w-3" />
-                                    </div>
-                                  )}
+                                  <div className="min-w-0">
+                                    <p className="font-bold text-foreground text-sm truncate">{b.listing?.title || "Unknown Listing"}</p>
+                                    <p className="text-xs text-muted-foreground font-medium mt-0.5 flex flex-wrap gap-1">
+                                      <span>{new Date(b.check_in).toLocaleDateString()}</span>
+                                      <span className="text-muted-foreground/50">•</span>
+                                      <span>{new Date(b.check_out).toLocaleDateString()}</span>
+                                    </p>
+                                    <p className="text-sm font-black text-foreground mt-1">{formatNaira(b.total_price)}</p>
+                                  </div>
                                 </div>
-                                <div className="min-w-0">
-                                  <p className="font-bold text-foreground text-sm truncate">{b.listing?.title || "Unknown Listing"}</p>
-                                  <p className="text-xs text-muted-foreground font-medium mt-0.5 flex flex-wrap gap-1">
-                                    <span>{new Date(b.check_in).toLocaleDateString()}</span>
-                                    <span>→</span>
-                                    <span>{new Date(b.check_out).toLocaleDateString()}</span>
-                                  </p>
-                                  <p className="text-sm font-black text-foreground mt-1">{formatNaira(b.total_price)}</p>
+                                <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                                  <Button onClick={() => handleAction(b.id, 'confirmed')} className="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-10 shadow-lg shadow-emerald-500/20 px-6">Accept</Button>
+                                  <Button onClick={() => handleAction(b.id, 'cancelled')} variant="destructive" className="flex-1 sm:flex-none font-bold rounded-xl h-10 px-6">Reject</Button>
                                 </div>
-                              </div>
-                              <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                                <Button onClick={() => handleAction(b.id, 'confirmed')} className="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-10 shadow-lg shadow-emerald-500/20">Accept</Button>
-                                <Button onClick={() => handleAction(b.id, 'cancelled')} variant="destructive" className="flex-1 sm:flex-none font-bold rounded-xl h-10">Reject</Button>
                               </div>
                             </div>
                           ))}
