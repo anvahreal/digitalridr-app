@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -69,23 +70,38 @@ const ListingDetail = () => {
   useEffect(() => {
     if (!listing?.id) return;
     async function fetchBlockedDates() {
-      const { data } = await supabase
-        .from('bookings')
-        .select('check_in, check_out')
-        .eq('listing_id', listing!.id)
-        .or('status.eq.confirmed,status.eq.pending');
+      try {
+        // Safe RPC call
+        const { data, error } = await supabase
+          .rpc('get_blocked_dates', { listing_id_input: listing!.id });
 
-      if (data) {
-        const dates: Date[] = [];
-        data.forEach((booking: any) => {
-          let current = new Date(booking.check_in);
-          const end = new Date(booking.check_out);
-          while (current <= end) {
-            dates.push(new Date(current));
-            current.setDate(current.getDate() + 1);
+        if (error) {
+          console.error("Error fetching availability (RPC):", error);
+          // Fallback or just ignore (dates won't be blocked, but page won't crash)
+          return;
+        }
+
+        if (data) {
+          const dates: Date[] = [];
+          // Ensure data is an array before iterating
+          if (Array.isArray(data)) {
+            data.forEach((booking: any) => {
+              if (!booking.check_in || !booking.check_out) return;
+              let current = new Date(booking.check_in);
+              const end = new Date(booking.check_out);
+              // Simple sanity check to prevent infinite loops if data is bad
+              if (isNaN(current.getTime()) || isNaN(end.getTime())) return;
+
+              while (current <= end) {
+                dates.push(new Date(current));
+                current.setDate(current.getDate() + 1);
+              }
+            });
           }
-        });
-        setDisabledDates(dates);
+          setDisabledDates(dates);
+        }
+      } catch (err) {
+        console.error("Crash prevented in fetchBlockedDates:", err);
       }
     }
     fetchBlockedDates();
@@ -238,7 +254,7 @@ const ListingDetail = () => {
           <div className="relative mb-10 overflow-hidden rounded-2xl border bg-secondary shadow-sm">
             {/* Mobile Carousel */}
             <div className="flex md:hidden overflow-x-auto snap-x snap-mandatory no-scrollbar h-72">
-              {listing.images.map((image, index) => (
+              {(listing.images || []).map((image, index) => (
                 <Dialog key={index}>
                   <div className="min-w-full snap-center relative">
                     <DialogTrigger asChild>
@@ -265,7 +281,7 @@ const ListingDetail = () => {
                 <DialogTrigger asChild>
                   <div className="relative col-span-2 row-span-2 overflow-hidden rounded-l-xl cursor-zoom-in group">
                     <img
-                      src={listing.images[0]}
+                      src={listing.images?.[0] || '/placeholder-image.jpg'}
                       alt={listing.title}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
@@ -277,7 +293,7 @@ const ListingDetail = () => {
                 </DialogContent>
               </Dialog>
 
-              {listing.images.slice(1, 5).map((image, index) => (
+              {(listing.images || []).slice(1, 5).map((image, index) => (
                 <Dialog key={index}>
                   <DialogTrigger asChild>
                     <div className="relative hidden overflow-hidden md:block first:rounded-tr-none last:rounded-br-xl cursor-zoom-in group">
@@ -376,7 +392,7 @@ const ListingDetail = () => {
               <div className="border-b pb-8">
                 <h3 className="mb-6 text-xl font-semibold">What this place offers</h3>
                 <div className="grid gap-y-4 sm:grid-cols-2">
-                  {listing.amenities.map((amenity) => {
+                  {(listing.amenities || []).map((amenity) => {
                     const Icon = amenityIcons[amenity] || Wifi;
                     return (
                       <div key={amenity} className="flex items-center gap-4 text-muted-foreground">

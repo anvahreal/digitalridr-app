@@ -63,7 +63,7 @@ const Checkout = () => {
   const [guests, setGuests] = useState(
     parseInt(searchParams.get("guests") || "1"),
   );
-  const [paymentMethod, setPaymentMethod] = useState("paystack");
+  const [paymentMethod, setPaymentMethod] = useState("bank");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isEditingGuests, setIsEditingGuests] = useState(false);
   // Dropdown States (Manual Accordion)
@@ -138,7 +138,7 @@ const Checkout = () => {
     publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_PLACEHOLDER_KEY',
   };
 
-  const initializePayment = usePaystackPayment(config);
+  // const initializePayment = usePaystackPayment(config); // Paystack functionality disabled
 
   const onSuccess = async (reference: any) => {
     setIsVerifying(true);
@@ -206,10 +206,10 @@ const Checkout = () => {
       return;
     }
 
-    if (paymentMethod === "paystack") {
-      initializePayment(onSuccess, onClose);
-    } else if (paymentMethod === "bank") {
+    if (paymentMethod === "bank") {
       processManualBooking();
+    } else {
+      toast.error("Please select a valid payment method (Bank Transfer).");
     }
   };
 
@@ -333,11 +333,12 @@ const Checkout = () => {
                 </h3>
                 <div className="grid grid-cols-3 gap-3">
                   <button
-                    onClick={() => setPaymentMethod("paystack")}
-                    className={`flex flex-col items-center gap-2 rounded-2xl border-2 py-4 transition-all ${paymentMethod === "paystack" ? "border-indigo-600 bg-indigo-50/10" : "border-transparent bg-card shadow-sm"}`}
+                    disabled
+                    onClick={() => toast.info("Paystack is currently unavailable. Please use Bank Transfer.")}
+                    className={`flex flex-col items-center gap-2 rounded-2xl border-2 py-4 transition-all opacity-50 cursor-not-allowed border-transparent bg-muted/50`}
                   >
-                    <CreditCard className={`h-5 w-5 ${paymentMethod === "paystack" ? "text-indigo-600" : "text-muted-foreground"}`} />
-                    <span className="text-[11px] font-bold capitalize">Paystack</span>
+                    <CreditCard className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-[11px] font-bold capitalize text-muted-foreground">Paystack (Off)</span>
                   </button>
 
                   <RestrictedPaymentMethod active={false}>
