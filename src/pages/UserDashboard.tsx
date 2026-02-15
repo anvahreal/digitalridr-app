@@ -217,83 +217,77 @@ const UserDashboard = () => {
                     bookings.filter(b => b.status === "confirmed" || b.status === "pending").map((booking) => (
                       <div
                         key={booking.id}
-                        className="group bg-card border border-border/50 hover:border-primary/20 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
+                        className="bg-card hover:bg-muted/10 border border-border/40 hover:border-border/80 rounded-[2rem] p-3 transition-all duration-300 group"
                       >
-                        <div className="flex flex-col md:flex-row">
-                          <div className="w-full md:w-48 h-48 md:h-auto relative shrink-0">
+                        <div className="flex flex-col md:flex-row gap-4">
+                          {/* Image Section */}
+                          <div className="w-full md:w-[280px] aspect-[4/3] md:aspect-[16/10] relative rounded-[1.5rem] overflow-hidden shrink-0">
                             <img
                               src={booking.listings?.images?.[0]}
-                              alt=""
-                              className="w-full h-full object-cover"
+                              alt={booking.listings?.title}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:hidden" />
-                            <div className="absolute bottom-3 left-3 md:hidden text-white">
-                              <p className="font-bold text-lg leading-none">{booking.listings?.title}</p>
-                              <p className="text-xs opacity-90">{booking.listings?.location}</p>
+                            {/* Badges Overlay */}
+                            <div className="absolute top-3 left-3 flex flex-col gap-2">
+                              {booking.status === 'confirmed' ? (
+                                <Badge className="bg-white/90 backdrop-blur-md text-emerald-600 border-white/20 shadow-sm">
+                                  {booking.payment_status === 'paid' ? 'Paid' : 'Confirmed'}
+                                </Badge>
+                              ) : booking.status === 'pending' ? (
+                                <Badge variant="secondary" className="bg-white/90 backdrop-blur-md text-orange-600 border-white/20 shadow-sm">
+                                  Pending approval
+                                </Badge>
+                              ) : null}
                             </div>
                           </div>
-                          <div className="p-5 md:p-6 flex-1 flex flex-col justify-between">
-                            <div>
-                              <div className="flex justify-between items-start mb-1 hidden md:flex">
-                                <div>
-                                  <h3 className="font-black text-lg text-foreground line-clamp-1">{booking.listings?.title}</h3>
-                                  <p className="text-xs font-bold text-muted-foreground">{booking.listings?.location}</p>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-0.5">Booking Ref</p>
-                                  <p className="text-xs font-mono font-bold text-foreground bg-muted px-2 py-0.5 rounded-md select-all">
-                                    {booking.id.split('-')[0].toUpperCase()}
-                                  </p>
-                                </div>
-                              </div>
 
-                              <div className="grid grid-cols-2 gap-4 mt-4 md:mt-2 bg-muted/30 p-3 rounded-2xl border border-border/50">
-                                <div>
-                                  <p className="text-[10px] font-bold uppercase text-muted-foreground mb-0.5">Check-in</p>
-                                  <div className="flex items-center gap-1.5 font-bold text-sm text-foreground">
-                                    <Calendar className="h-3.5 w-3.5 text-[#F48221]" />
-                                    {format(new Date(booking.check_in), "EEE, MMM d")}
-                                  </div>
-                                </div>
-                                <div>
-                                  <p className="text-[10px] font-bold uppercase text-muted-foreground mb-0.5">Check-out</p>
-                                  <div className="flex items-center gap-1.5 font-bold text-sm text-foreground">
-                                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                                    {format(new Date(booking.check_out), "EEE, MMM d")}
-                                  </div>
-                                </div>
+                          {/* Content Section */}
+                          <div className="flex-1 flex flex-col py-1 md:pr-2">
+                            <div className="flex justify-between items-start mb-4">
+                              <div>
+                                <h3 className="font-bold text-xl text-foreground leading-tight mb-1">{booking.listings?.title}</h3>
+                                <p className="text-sm text-muted-foreground font-medium flex items-center gap-1">
+                                  <MapPin className="h-3.5 w-3.5" />
+                                  {booking.listings?.location}
+                                </p>
+                              </div>
+                              <div className="hidden md:block text-right">
+                                <span className="font-black text-xl text-foreground block">{formatNaira(booking.total_price)}</span>
+                                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Total</span>
                               </div>
                             </div>
 
-                            <div className="mt-2 flex items-center justify-between">
-                              <div className="flex gap-2">
-                                {booking.status === 'confirmed' && (
-                                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
-                                    {booking.payment_status === 'paid' ? 'Paid' : 'Confirmed'}
-                                  </Badge>
-                                )}
-                                {booking.status === 'pending' && (
-                                  <Badge variant="secondary" className="font-normal text-xs bg-orange-100 text-orange-700">Pending approval</Badge>
-                                )}
+
+                            {/* Footer Actions */}
+                            <div className="mt-auto flex items-center justify-between pt-3 border-t border-dashed border-border/40">
+                              <div className="flex flex-col md:hidden">
+                                <span className="font-black text-lg text-foreground">{formatNaira(booking.total_price)}</span>
                               </div>
-                              <div className="flex items-center gap-3">
-                                <span className="font-bold text-sm sm:text-base text-foreground">
-                                  {formatNaira(booking.total_price)}
-                                </span>
-                                {booking.status === 'confirmed' && (
+
+                              <div className="font-mono text-[10px] font-bold text-muted-foreground bg-muted px-2 py-1 rounded hidden md:block">
+                                REF: {booking.id.split('-')[0].toUpperCase()}
+                              </div>
+
+                              <div className="flex gap-2 ml-auto">
+                                {booking.status === 'pending' && (
                                   <Button
                                     size="sm"
-                                    variant="outline"
+                                    variant="ghost"
                                     onClick={() => handleManageBooking(booking)}
-                                    className="h-8 rounded-xl font-bold text-xs"
+                                    className="h-9 rounded-xl font-bold text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                                   >
-                                    View Details
+                                    Cancel Request
                                   </Button>
                                 )}
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleManageBooking(booking)}
+                                  className="h-9 rounded-xl font-bold text-xs bg-foreground text-background hover:bg-foreground/90 shadow-lg shadow-foreground/10"
+                                >
+                                  {booking.status === 'confirmed' ? 'Manage Booking' : 'View Details'}
+                                </Button>
                               </div>
                             </div>
-
-                            {/* CHECK-IN INSTRUCTIONS - Moved to 'Show details' dialog */}
                           </div>
                         </div>
                       </div>
@@ -414,9 +408,11 @@ const UserDashboard = () => {
                       </p>
                       <Badge variant="outline" className={cn(
                         "rounded-full px-3 py-0.5 text-[10px] border-border uppercase tracking-widest",
-                        profile?.is_verified ? "text-emerald-500 border-emerald-500/20 bg-emerald-500/5" : "text-muted-foreground"
+                        (profile?.is_verified || bookings.some(b => b.status === 'confirmed'))
+                          ? "text-emerald-500 border-emerald-500/20 bg-emerald-500/5"
+                          : "text-muted-foreground"
                       )}>
-                        {profile?.is_verified ? "Verified Guest" : "Standard Guest"}
+                        {(profile?.is_verified || bookings.some(b => b.status === 'confirmed')) ? "Verified Guest" : "Standard Guest"}
                       </Badge>
                     </div>
                   </div>

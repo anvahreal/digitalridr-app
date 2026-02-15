@@ -8,6 +8,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useListing } from "@/hooks/useListings";
+import { useAuth } from "@/hooks/useAuth"; // Added useAuth
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Star,
   Heart,
@@ -63,6 +67,75 @@ const ListingDetail = () => {
   const [currentImage, setCurrentImage] = useState(0);
   const [showMap, setShowMap] = useState(false);
   const [disabledDates, setDisabledDates] = useState<Date[]>([]);
+
+  // Reviews State
+  const { user } = useAuth();
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewContent, setNewReviewContent] = useState("");
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+
+  // Fetch Reviews
+  useEffect(() => {
+    if (!id) return;
+    const fetchReviews = async () => {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select(`
+          *,
+          guest:guest_id (
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('listing_id', id)
+        .order('created_at', { ascending: false });
+
+      if (data) setReviews(data);
+      setReviewsLoading(false);
+    };
+    fetchReviews();
+  }, [id]);
+
+  const handleSubmitReview = async () => {
+    if (!user) {
+      toast.error("Please login to verify your stay and leave a review.");
+      navigate("/auth");
+      return;
+    }
+
+    if (!newReviewContent.trim()) {
+      toast.error("Please write a few words about your stay.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('reviews').insert({
+        listing_id: id,
+        guest_id: user.id,
+        rating: newReviewRating,
+        content: newReviewContent
+      });
+
+      if (error) throw error;
+
+      toast.success("Review submitted! Thank you.");
+      setIsReviewOpen(false);
+      setNewReviewContent("");
+      // Refresh reviews
+      const { data } = await supabase
+        .from('reviews')
+        .select(`*, guest:guest_id(full_name, avatar_url)`)
+        .eq('listing_id', id)
+        .order('created_at', { ascending: false });
+      if (data) setReviews(data);
+
+    } catch (e: any) {
+      console.error("Review Error:", e);
+      toast.error("Failed to submit review.");
+    }
+  };
 
   const isLiked = listing ? isFavorite(listing.id) : false;
 
@@ -177,8 +250,11 @@ const ListingDetail = () => {
   };
 
   const handleReviewsClick = () => {
-    // Placeholder until we implement the full reviews section
-    toast.info("Reviews section coming soon!");
+    // Scroll to reviews section
+    const element = document.getElementById('reviews');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -402,6 +478,89 @@ const ListingDetail = () => {
                     );
                   })}
                 </div>
+              </div>
+              {/* Reviews Section */}
+              <div className="border-b pb-8" id="reviews">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold flex items-center gap-2">
+                    <Star className="h-5 w-5 fill-[#F48221] text-[#F48221]" />
+                    {listing.rating > 0 ? listing.rating : "New"} · {reviews.length} reviews
+                  </h3>
+
+                  <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="border-black text-black font-semibold hover:bg-muted">Write a Review</Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <div className="grid gap-4 py-4">
+                        <h2 className="text-lg font-bold">How was your stay?</h2>
+                        <div className="space-y-2">
+                          <Label>Rating</Label>
+                          <div className="flex gap-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setNewReviewRating(star)}
+                                className="focus:outline-none transition-transform active:scale-95"
+                              >
+                                <Star
+                                  className={cn(
+                                    "h-8 w-8 cursor-pointer transition-colors",
+                                    star <= newReviewRating ? "fill-[#F48221] text-[#F48221]" : "text-muted-foreground/30"
+                                  )}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Comments</Label>
+                          <Textarea
+                            placeholder="Share your experience..."
+                            value={newReviewContent}
+                            onChange={(e) => setNewReviewContent(e.target.value)}
+                            className="h-32"
+                          />
+                        </div>
+                        <Button onClick={handleSubmitReview} className="w-full bg-[#F48221] text-white font-bold hover:bg-[#E36D0B]">
+                          Submit Review
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                {reviewsLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[1, 2].map(i => <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />)}
+                  </div>
+                ) : reviews.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {reviews.slice(0, 6).map((review) => (
+                      <div key={review.id} className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={review.guest?.avatar_url} />
+                            <AvatarFallback>{review.guest?.full_name?.[0] || 'G'}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold text-foreground">{review.guest?.full_name || "Guest"}</p>
+                            <p className="text-xs text-muted-foreground">{format(new Date(review.created_at), 'MMMM yyyy')}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: review.rating }).map((_, i) => (
+                            <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
+                          ))}
+                        </div>
+                        <p className="text-muted-foreground text-sm leading-relaxed">{review.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground italic">No reviews yet. Be the first to share your experience!</p>
+                )}
               </div>
             </div>
 

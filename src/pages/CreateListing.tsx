@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import {
   ChevronLeft, Camera, MapPin, Search,
   CheckCircle2, Plus, Minus, Home, Sparkles, Loader2, X, Play, Video,
-  Check, ChevronsUpDown
+  Check, ChevronsUpDown, DollarSign, Calendar, Shield, ArrowRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatNaira } from "@/lib/utils";
@@ -35,6 +35,16 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 const LAGOS_DISTRICTS = [
   "Abule Egba", "Agidingbi", "Agege", "Ajah", "Akoka", "Alagbado", "Alapere", "Alausa", "Alimosho",
@@ -59,6 +69,40 @@ const CreateListing = () => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(!!id);
   const [openDistrict, setOpenDistrict] = useState(false);
+
+  // Host Interest Form State
+  const [interestFormOpen, setInterestFormOpen] = useState(false);
+  const [interestData, setInterestData] = useState({
+    name: "",
+    phone: "",
+    location: "",
+    propertyType: "Apartment"
+  });
+
+  // Pre-fill user data if available when opening form
+  useEffect(() => {
+    if (user && interestFormOpen) {
+      setInterestData(prev => ({
+        ...prev,
+        name: user.user_metadata?.full_name || prev.name,
+        phone: user.user_metadata?.phone_number || prev.phone
+      }));
+    }
+  }, [user, interestFormOpen]);
+
+  // Handle WhatsApp Inquiry
+  const handleSendInquiry = () => {
+    if (!interestData.name || !interestData.phone) {
+      toast.error("Please provide your name and phone number.");
+      return;
+    }
+
+    const message = `Hi Digital Ridr, I'm interested in hosting a ${interestData.propertyType} in ${interestData.location || "Lagos"}. My name is ${interestData.name} (${interestData.phone}). Can you guide me?`;
+    window.open(`https://wa.me/2348000000000?text=${encodeURIComponent(message)}`, '_blank');
+    setInterestFormOpen(false);
+    toast.success("Inquiry sent! Redirecting to WhatsApp...");
+  };
+
   const totalSteps = 3;
 
   // Form State
@@ -282,39 +326,217 @@ const CreateListing = () => {
   // Host Approval Check
   if (user?.host_status !== 'approved') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="max-w-md text-center space-y-4">
-          <div className="mx-auto h-20 w-20 bg-muted rounded-full flex items-center justify-center">
-            {user?.host_status === 'pending' ? <Loader2 className="h-10 w-10 animate-spin text-primary" /> : <Home className="h-10 w-10 text-muted-foreground" />}
-          </div>
-          <h1 className="text-2xl font-black text-foreground">
-            {user?.host_status === 'pending' ? 'Application Pending' : 'Become a Host'}
-          </h1>
-          <p className="text-muted-foreground">
-            {user?.host_status === 'pending'
-              ? "Your host application is currently under review by our admin team. Check back soon!"
-              : "You need to be an approved host to list properties."}
-          </p>
-          {user?.host_status === 'none' || !user?.host_status ? (
-            <Button
-              onClick={async () => {
-                try {
-                  await updateProfile({ host_status: 'pending' });
-                  toast.success("Application submitted! Pending approval.");
-                } catch (e: any) {
-                  toast.error(`Failed to apply: ${e.message || "Unknown error"}`);
-                  console.error("Host Application Error:", e);
-                }
-              }}
-              className="w-full font-bold"
-            >
-              Apply to Host
+      <div className="min-h-screen bg-background font-sans transition-colors duration-300">
+        {/* Navigation */}
+        <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border">
+          <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-6 w-6 text-[#F48221] fill-[#F48221]" />
+              <span className="font-black text-xl tracking-tighter text-[#00AEEF]">
+                Digital<span className="text-[#F48221]">Ridr</span>
+              </span>
+            </div>
+            <Button variant="ghost" onClick={() => navigate('/')} className="font-bold text-sm">
+              Back to Home
             </Button>
-          ) : null}
-          <Button variant="outline" onClick={() => navigate('/')} className="w-full font-bold">
-            Back to Home
-          </Button>
-        </div>
+          </div>
+        </header>
+
+        <main className="pt-24 pb-20">
+          {/* Hero Section */}
+          <section className="container mx-auto px-4 mb-20">
+            <div className="max-w-4xl mx-auto text-center space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="inline-flex items-center justify-center p-3 mb-4 rounded-full bg-[#F48221]/10 text-[#F48221]">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h1 className="text-4xl md:text-6xl font-black text-foreground tracking-tight leading-tight">
+                Turn your space into <br />
+                <span className="text-[#F48221]">extra income</span>.
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium">
+                Join thousands of hosts renting their homes on Digital Ridr. It's simple, secure, and rewarding.
+              </p>
+
+              <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                {user?.host_status === 'pending' ? (
+                  <div className="flex items-center gap-3 px-8 py-4 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 rounded-2xl font-bold border border-orange-200 dark:border-orange-800">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Application Pending Review
+                  </div>
+                ) : (
+                  <Button
+                    size="lg"
+                    onClick={async () => {
+                      try {
+                        await updateProfile({ host_status: 'pending' });
+                        toast.success("Application submitted! Pending approval.");
+                      } catch (e: any) {
+                        toast.error(`Failed to apply: ${e.message || "Unknown error"}`);
+                      }
+                    }}
+                    className="h-14 px-8 rounded-full bg-[#F48221] hover:bg-[#E36D0B] text-white font-black text-lg shadow-lg shadow-orange-500/20 active:scale-95 transition-all w-full sm:w-auto"
+                  >
+                    Apply to Host
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setInterestFormOpen(true)}
+                  className="h-14 px-8 rounded-full border-2 border-border font-bold text-lg hover:bg-muted w-full sm:w-auto"
+                >
+                  Learn More
+                </Button>
+              </div>
+
+              {/* Host Interest Form Modal */}
+              <Dialog open={interestFormOpen} onOpenChange={setInterestFormOpen}>
+                <DialogContent className="sm:max-w-[425px] rounded-[2rem]">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-black text-center">Let's get started</DialogTitle>
+                    <DialogDescription className="text-center">
+                      Tell us a bit about yourself and your property. We'll guide you through the rest on WhatsApp.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="name" className="font-bold">Full Name</Label>
+                      <Input
+                        id="name"
+                        value={interestData.name}
+                        onChange={(e) => setInterestData({ ...interestData, name: e.target.value })}
+                        className="rounded-xl bg-muted/50 border-transparent h-11"
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="phone" className="font-bold">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        value={interestData.phone}
+                        onChange={(e) => setInterestData({ ...interestData, phone: e.target.value })}
+                        className="rounded-xl bg-muted/50 border-transparent h-11"
+                        placeholder="080..."
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="location" className="font-bold">Property Location (Area)</Label>
+                      <Input
+                        id="location"
+                        value={interestData.location}
+                        onChange={(e) => setInterestData({ ...interestData, location: e.target.value })}
+                        className="rounded-xl bg-muted/50 border-transparent h-11"
+                        placeholder="e.g. Lekki Phase 1"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="type" className="font-bold">Property Type</Label>
+                      <Select
+                        value={interestData.propertyType}
+                        onValueChange={(val) => setInterestData({ ...interestData, propertyType: val })}
+                      >
+                        <SelectTrigger className="w-full rounded-xl bg-muted/50 border-transparent h-11">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          <SelectItem value="Apartment">Apartment</SelectItem>
+                          <SelectItem value="House">House</SelectItem>
+                          <SelectItem value="Studio">Studio</SelectItem>
+                          <SelectItem value="Villa">Villa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={handleSendInquiry} className="w-full rounded-xl h-12 font-bold bg-[#25D366] hover:bg-[#128C7E] text-white gap-2">
+                      Send Inquiry via WhatsApp <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </section>
+
+          {/* Benefits Grid */}
+          <section className="container mx-auto px-4 mb-24">
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {[
+                {
+                  icon: DollarSign,
+                  title: "Earn Extra Income",
+                  desc: "Share your space and earn money to fund your dreams.",
+                  color: "text-emerald-500",
+                  bg: "bg-emerald-500/10"
+                },
+                {
+                  icon: Calendar,
+                  title: "Host Your Way",
+                  desc: "You decide when your space is available and how you host.",
+                  color: "text-blue-500",
+                  bg: "bg-blue-500/10"
+                },
+                {
+                  icon: Shield,
+                  title: "Peace of Mind",
+                  desc: "We verify guests and provide 24/7 support for every booking.",
+                  color: "text-purple-500",
+                  bg: "bg-purple-500/10"
+                }
+              ].map((item, i) => (
+                <div key={i} className="bg-card p-8 rounded-[2rem] border border-border/50 hover:border-border transition-colors text-center space-y-4">
+                  <div className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center ${item.bg} ${item.color}`}>
+                    <item.icon className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-black text-foreground">{item.title}</h3>
+                  <p className="text-muted-foreground font-medium">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Steps */}
+          <section className="container mx-auto px-4 mb-20">
+            <div className="max-w-3xl mx-auto bg-muted/30 rounded-[3rem] p-8 md:p-12">
+              <h2 className="text-3xl font-black text-center mb-12">How it works</h2>
+              <div className="space-y-8">
+                {[
+                  { step: "01", title: "Apply to Host", desc: "Fill out a quick application. Our team will verify your identity." },
+                  { step: "02", title: "List Your Space", desc: "Upload photos, set your price, and tell guests what makes your place special." },
+                  { step: "03", title: "Welcome Guests", desc: "Receive bookings and earn money seamlessly through our platform." }
+                ].map((s, i) => (
+                  <div key={i} className="flex gap-6 items-start">
+                    <span className="text-4xl font-black text-muted-foreground/20 shrink-0">{s.step}</span>
+                    <div>
+                      <h3 className="text-xl font-bold text-foreground mb-1">{s.title}</h3>
+                      <p className="text-muted-foreground">{s.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Bottom CTA */}
+          <section className="container mx-auto px-4 text-center">
+            <h2 className="text-2xl font-bold mb-6">Ready to get started?</h2>
+            {user?.host_status !== 'pending' && (
+              <Button
+                size="lg"
+                onClick={async () => {
+                  try {
+                    await updateProfile({ host_status: 'pending' });
+                    toast.success("Application submitted! Pending approval.");
+                  } catch (e: any) {
+                    toast.error(`Failed to apply: ${e.message || "Unknown error"}`);
+                  }
+                }}
+                className="h-12 px-8 rounded-full bg-foreground text-background font-bold hover:bg-foreground/90 gap-2"
+              >
+                Start Hosting <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
+          </section>
+        </main>
       </div>
     );
   }
