@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { useProfile } from "@/hooks/useProfile";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { supabase } from "@/lib/supabase";
 import {
   ChevronLeft, Camera, MapPin, Search,
-  CheckCircle2, Plus, Minus, Home, Sparkles, Loader2, X, Play, Video,
+  CheckCircle2, Plus, Minus, Home, Sparkles, X, Play, Video,
   Check, ChevronsUpDown, DollarSign, Calendar, Shield, ArrowRight
 } from "lucide-react";
 import { toast } from "sonner";
@@ -320,7 +321,7 @@ const CreateListing = () => {
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
   if (fetching) {
-    return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    return <div className="min-h-screen flex items-center justify-center bg-background"><LoadingSpinner className="h-10 w-10" /></div>;
   }
 
   // Host Approval Check
@@ -360,7 +361,7 @@ const CreateListing = () => {
               <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                 {user?.host_status === 'pending' ? (
                   <div className="flex items-center gap-3 px-8 py-4 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 rounded-2xl font-bold border border-orange-200 dark:border-orange-800">
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <LoadingSpinner className="h-4 w-4" />
                     Application Pending Review
                   </div>
                 ) : (
@@ -778,7 +779,7 @@ const CreateListing = () => {
                   disabled={uploading}
                 />
                 <div className="h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform">
-                  {uploading ? <Loader2 className="h-8 w-8 text-primary animate-spin" /> : <Camera className="h-8 w-8 text-primary" />}
+                  {uploading ? <LoadingSpinner className="h-8 w-8" /> : <Camera className="h-8 w-8 text-primary" />}
                 </div>
                 <p className="font-black text-foreground">{uploading ? "Uploading..." : "Add Property Photos"}</p>
                 <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Drag and drop or tap to browse</p>

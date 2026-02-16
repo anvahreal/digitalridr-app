@@ -37,7 +37,9 @@ const Auth = () => {
         if (error) throw error;
         toast.success("Welcome back!");
         const returnTo = searchParams.get("returnTo");
-        navigate(returnTo || "/");
+        // Prevent redirect loop if returnTo is auth page
+        const safeReturnTo = (returnTo && !returnTo.includes('/auth')) ? returnTo : "/dashboard";
+        navigate(safeReturnTo, { replace: true });
       } else {
         // SIGNUP logic - Multi-step handled in UI, this is final submission
         const { error } = await supabase.auth.signUp({

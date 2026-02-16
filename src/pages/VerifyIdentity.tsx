@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/hooks/useProfile";
-import { Loader2, Shield, Camera, Upload, CheckCircle2, FileCheck, ArrowLeft } from "lucide-react";
+import { Shield, Camera, Upload, CheckCircle2, FileCheck, ArrowLeft } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const VerifyIdentity = () => {
@@ -117,7 +118,7 @@ const VerifyIdentity = () => {
     if (profileLoading) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <LoadingSpinner className="h-10 w-10" />
             </div>
         );
     }
@@ -287,7 +288,7 @@ const VerifyIdentity = () => {
                     >
                         {uploading ? (
                             <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...
+                                <LoadingSpinner className="mr-2 h-4 w-4" /> Submitting...
                             </>
                         ) : (
                             "Submit Verification"

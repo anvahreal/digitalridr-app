@@ -6,9 +6,9 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Clock,
-  CheckCircle2,
-  Loader2
+  CheckCircle2
 } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useHostBookings } from "@/hooks/useHostBookings";
 import { formatNaira } from "@/lib/utils";
 
@@ -75,7 +75,7 @@ const HostWallet = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? <Loader2 className="animate-spin" /> : (
+            {loading ? <LoadingSpinner className="h-8 w-8" /> : (
               <div className="text-3xl font-black mb-1">{formatNaira(Math.max(0, availableBalance))}</div>
             )}
             <p className="text-[10px] text-white/70 font-bold uppercase">Ready for withdrawal</p>
@@ -89,7 +89,7 @@ const HostWallet = () => {
             <Clock className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            {loading ? <Loader2 className="animate-spin text-muted-foreground" /> : (
+            {loading ? <LoadingSpinner className="h-8 w-8" /> : (
               <div className="text-2xl font-black text-foreground">{formatNaira(pendingBookings + totalWithdrawn)}</div>
             )}
             <p className="text-[10px] text-muted-foreground mt-1 font-bold">Includes processing payouts</p>
@@ -103,7 +103,7 @@ const HostWallet = () => {
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            {loading ? <Loader2 className="animate-spin text-muted-foreground" /> : (
+            {loading ? <LoadingSpinner className="h-8 w-8" /> : (
               <div className="text-2xl font-black text-foreground">{formatNaira(totalEarned)}</div>
             )}
             <p className="text-[10px] text-muted-foreground mt-1 font-bold">Gross earnings</p>

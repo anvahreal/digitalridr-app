@@ -404,7 +404,7 @@ const HostDashboard = () => {
                           </div>
                           <DialogFooter>
                             <Button onClick={handleRequestPayout} disabled={payoutLoading || !withdrawAmount} className="w-full h-14 rounded-2xl bg-foreground text-background font-black text-lg hover:bg-foreground/90">
-                              {payoutLoading ? <Loader2 className="animate-spin" /> : "Confirm Payout"}
+                              {payoutLoading ? <LoadingSpinner className="h-4 w-4" /> : "Confirm Payout"}
                             </Button>
                           </DialogFooter>
                         </DialogContent>

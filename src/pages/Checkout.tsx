@@ -71,7 +71,7 @@ const Checkout = () => {
 
   const [isVerifying, setIsVerifying] = useState(false);
 
-  if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[#F48221]" /></div>;
+  if (loading) return <div className="flex h-screen items-center justify-center"><LoadingSpinner className="h-10 w-10" /></div>;
 
   if (!user) {
     return (
@@ -524,7 +524,7 @@ const Checkout = () => {
                 >
                   {isVerifying ? (
                     <div className="flex items-center gap-2">
-                      <Loader2 className="h-5 w-5 animate-spin" /> Verifying...
+                      <LoadingSpinner className="h-4 w-4" /> Verifying...
                     </div>
                   ) : paymentMethod === "bank"
                     ? `I have sent ${formatNaira(total)}`

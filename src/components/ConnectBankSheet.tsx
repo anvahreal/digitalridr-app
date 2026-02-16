@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Landmark, CheckCircle, Building2, ChevronDown, Loader2 } from "lucide-react";
+import { Landmark, CheckCircle, Building2, ChevronDown } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import {
   Sheet,
   SheetContent,
@@ -123,7 +124,7 @@ export function ConnectBankSheet({ onAccountConnected }: ConnectBankSheetProps) 
               disabled={loading || accountNumber.length < 10}
               className="w-full h-14 rounded-2xl bg-primary text-primary-foreground font-black text-lg shadow-xl hover:bg-primary/90"
             >
-              {loading ? <Loader2 className="animate-spin" /> : "Verify Account"}
+              {loading ? <LoadingSpinner className="h-4 w-4" /> : "Verify Account"}
             </Button>
           </div>
         ) : (
@@ -141,7 +142,7 @@ export function ConnectBankSheet({ onAccountConnected }: ConnectBankSheetProps) 
               onClick={handleSave}
               disabled={loading}
             >
-              {loading ? <Loader2 className="animate-spin" /> : "Confirm & Save"}
+              {loading ? <LoadingSpinner className="h-4 w-4" /> : "Confirm & Save"}
             </Button>
             <Button variant="ghost" className="font-bold text-muted-foreground hover:bg-muted" onClick={() => setStep(1)} disabled={loading}>
               Back

@@ -26,7 +26,8 @@ import {
   Clock,
   AlertCircle,
   Bell,
-  Shield
+  Shield,
+  Loader2
 } from "lucide-react";
 import { formatNaira, cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -40,6 +41,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 // ... imports
 
@@ -112,7 +114,7 @@ const UserDashboard = () => {
           {/* Welcome Header */}
           <div className="mb-10">
             <h1 className="text-3xl font-black text-foreground tracking-tight">
-              Welcome back, {loading ? "..." : (() => {
+              Welcome back, {loading ? <LoadingSpinner className="h-4 w-4 inline ml-2" /> : (() => {
                 const names = profile?.full_name?.trim().split(' ') || [];
                 return (names.length > 1 ? names[1] : names[0]) || "Guest";
               })()} 👋
