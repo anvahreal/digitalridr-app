@@ -112,7 +112,10 @@ const UserDashboard = () => {
           {/* Welcome Header */}
           <div className="mb-10">
             <h1 className="text-3xl font-black text-foreground tracking-tight">
-              Welcome back, {loading ? "..." : (profile?.full_name?.split(' ')[0] || "Guest")} 👋
+              Welcome back, {loading ? "..." : (() => {
+                const names = profile?.full_name?.trim().split(' ') || [];
+                return (names.length > 1 ? names[1] : names[0]) || "Guest";
+              })()} 👋
             </h1>
             <p className="text-muted-foreground font-medium mt-1">
               {bookings.filter(b => b.status === 'confirmed').length > 0

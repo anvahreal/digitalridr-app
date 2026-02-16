@@ -206,7 +206,7 @@ const Auth = () => {
                       <Input
                         id="email"
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder="Enter your email"
                         className="pl-10 h-12 rounded-xl bg-muted/30 border-border/50 focus:border-primary/50"
                         value={formData.email}
                         onChange={(e) =>
@@ -261,7 +261,7 @@ const Auth = () => {
                       <Input
                         id="fullName"
                         type="text"
-                        placeholder="e.g. John Doe"
+                        placeholder="Enter your full name"
                         className="pl-10 h-12 rounded-xl bg-muted/30 border-border/50"
                         value={formData.fullName}
                         onChange={(e) =>
@@ -286,7 +286,7 @@ const Auth = () => {
                       }
                       required
                     />
-                    <p className="text-xs text-muted-foreground">To sign up, you need to be at least 18. Your birthday won't be shared with other people.</p>
+                    <p className="text-xs text-muted-foreground"></p>
                   </div>
 
                   <div className="space-y-2">
@@ -294,7 +294,7 @@ const Auth = () => {
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="+234 800 000 0000"
+                      placeholder="Enter your phone number"
                       className="h-12 rounded-xl bg-muted/30 border-border/50"
                       value={formData.phone}
                       onChange={(e) =>
@@ -302,7 +302,19 @@ const Auth = () => {
                       }
                       required
                     />
-                    <p className="text-xs text-muted-foreground">We'll send booking confirmations and updates to this number.</p>
+                    <p className="text-xs text-muted-foreground"></p>
+                  </div>
+
+                  <div className="flex items-start space-x-2 pt-2">
+                    <input
+                      type="checkbox"
+                      id="terms"
+                      required
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="terms" className="text-sm text-muted-foreground leading-snug">
+                      I agree to the <Link to="/terms" target="_blank" className="text-primary hover:underline">Terms of Service</Link> and <Link to="/privacy-policy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>, and I consent to the collection of my data as described.
+                    </label>
                   </div>
                 </div>
               )}

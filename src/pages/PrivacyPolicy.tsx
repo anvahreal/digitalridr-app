@@ -20,40 +20,83 @@ const PrivacyPolicy = () => {
                     </p>
                 </div>
 
-                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
+                <div className="space-y-6 text-left">
                     <Section
                         icon={Eye}
                         title="1. Information We Collect"
-                        content="We collect information you provide directly to us, such as when you create an account, update your profile, make a booking, or communicate with us. This may include your name, email address, phone number, and payment information."
-                    />
-
-                    <Section
-                        icon={FileText}
-                        title="2. How We Use Your Information"
-                        content="We use the information we collect to provide, maintain, and improve our services, to process transactions, to send you related information, and to communicate with you about products, services, offers, and events."
+                        content={
+                            <>
+                                <p className="mb-2">We only collect data that is strictly necessary for providing our services (Data Minimization). This includes:</p>
+                                <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                                    <li><strong>Identity Data:</strong> Name, government-issued ID number, and facial recognition data for identity verification (required for security).</li>
+                                    <li><strong>Contact Data:</strong> Email address and phone number for booking confirmations and communication.</li>
+                                    <li><strong>Financial Data:</strong> Payment information processed securely by our payment partners.</li>
+                                    <li><strong>Transaction Data:</strong> Details about payments and bookings.</li>
+                                </ul>
+                            </>
+                        }
                     />
 
                     <Section
                         icon={Lock}
-                        title="3. Data Security"
-                        content="We implement appropriate technical and organizational measures to protect your personal data against unauthorized or unlawful processing, accidental loss, destruction, or damage."
+                        title="2. Purpose of Collection"
+                        content={
+                            <>
+                                <p className="mb-2">Your data is collected for specific, explicit, and legitimate purposes:</p>
+                                <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                                    <li>To verify your identity and ensure the safety of our hosts and guests.</li>
+                                    <li>To process bookings and payments.</li>
+                                    <li>To comply with legal obligations (e.g., guest registration laws).</li>
+                                    <li>To communicate with you regarding your account or bookings.</li>
+                                </ul>
+                            </>
+                        }
                     />
 
-                    <div className="p-6 bg-muted/30 rounded-3xl border border-border mt-8">
-                        <h3 className="font-bold text-lg mb-2">Contact Us</h3>
-                        <p className="text-muted-foreground">
-                            If you have any questions about this Privacy Policy, please contact us at <a href="mailto:privacy@digitalridr.com" className="text-[#F48221] hover:underline">privacy@digitalridr.com</a>.
-                        </p>
-                    </div>
+                    <Section
+                        icon={ShieldCheck}
+                        title="3. Data Security"
+                        content="We implement robust technical and organizational measures to protect your personal data. This includes encryption of sensitive data (like IDs and payment details) both in transit and at rest, strict access controls, and regular security assessments considering the risks involved in processing personal data."
+                    />
+
+                    <Section
+                        icon={FileText}
+                        title="4. Your Rights"
+                        content={
+                            <>
+                                <p className="mb-2">Under the Nigerian Data Protection Regulation (NDPR) and GDPR (where applicable), you have the right to:</p>
+                                <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                                    <li><strong>Access:</strong> Request a copy of the personal data we hold about you.</li>
+                                    <li><strong>Rectification:</strong> Request correction of inaccurate or incomplete data.</li>
+                                    <li><strong>Erasure:</strong> Request deletion of your personal data ('Right to be Forgotten'), subject to legal retention obligations.</li>
+                                    <li><strong>Restriction:</strong> Request restriction of processing of your personal data.</li>
+                                    <li><strong>Withdraw Consent:</strong> Withdraw your consent at any time where we rely on consent to process your data.</li>
+                                </ul>
+                            </>
+                        }
+                    />
+                    <Section
+                        icon={Eye}
+                        title="5. Data Retention"
+                        content="We retain your personal data only for as long as necessary to fulfill the purposes for which it was collected, including for the purposes of satisfying any legal, accounting, or reporting requirements."
+                    />
                 </div>
-            </main>
+
+                <div className="p-6 bg-muted/30 rounded-3xl border border-border mt-8">
+                    <h3 className="font-bold text-lg mb-2">Contact Us</h3>
+                    <p className="text-muted-foreground">
+                        If you have any questions about this Privacy Policy, please contact us at <a href="mailto:privacy@digitalridr.com" className="text-[#F48221] hover:underline">privacy@digitalridr.com</a>.
+                    </p>
+                </div>
+
+            </main >
 
             <Footer />
-        </div>
+        </div >
     );
 };
 
-const Section = ({ icon: Icon, title, content }: { icon: any, title: string, content: string }) => (
+const Section = ({ icon: Icon, title, content }: { icon: any, title: string, content: React.ReactNode }) => (
     <div className="flex gap-6">
         <div className="shrink-0 mt-1">
             <div className="h-10 w-10 bg-muted rounded-xl flex items-center justify-center text-foreground">

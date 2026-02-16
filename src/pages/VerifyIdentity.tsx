@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/hooks/useProfile";
-import { Loader2, Shield, Camera, Upload, CheckCircle2 } from "lucide-react";
+import { Loader2, Shield, Camera, Upload, CheckCircle2, FileCheck, ArrowLeft } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const VerifyIdentity = () => {
     const navigate = useNavigate();
@@ -85,15 +86,20 @@ const VerifyIdentity = () => {
             const selfieUrl = await uploadFile(selfieFile, `${user.id}/selfie`);
             console.log("Selfie Path:", selfieUrl);
 
-            // 3. Update Profile via RPC
-            console.log("Calling RPC submit_identity_verification...");
-            const { error } = await supabase.rpc('submit_identity_verification', {
-                doc_url: idUrl,
-                selfie_url_input: selfieUrl
-            });
+            // 3. Update Profile - AUTO VERIFY
+            console.log("Auto-verifying user...");
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    identity_doc_url: idUrl,
+                    selfie_url: selfieUrl,
+                    verification_status: 'verified', // DIRECT AUTO-VERIFICATION
+                    verification_submitted_at: new Date().toISOString()
+                })
+                .eq('id', user.id);
 
             if (error) {
-                console.error("RPC Error:", error);
+                console.error("Update Error:", error);
                 throw error;
             }
 
@@ -156,116 +162,139 @@ const VerifyIdentity = () => {
     }
 
     return (
-        <div className="min-h-screen bg-background font-sans">
+        <div className="min-h-screen bg-background">
             <Header />
-            <main className="container max-w-xl py-12">
-                <div className="bg-card border border-border rounded-3xl p-6 md:p-8 shadow-sm space-y-8">
+            <div className="container mx-auto px-4 py-6 md:py-12 max-w-4xl">
+                <Button variant="ghost" className="mb-6 md:mb-8" onClick={() => navigate('/dashboard')}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+                </Button>
 
-                    <div className="text-center space-y-2">
-                        <div className="mx-auto h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-                            <Shield className="h-6 w-6 text-primary" />
-                        </div>
-                        <h1 className="text-2xl font-bold">Welcome to Digital Ridr!</h1>
-                        <p className="text-muted-foreground text-sm">
-                            Let's get you verified so you can book stays instantly. <br />
-                            This helps keep our community safe.
+                <div className="space-y-6 md:space-y-8">
+                    <div className="text-center space-y-2 md:space-y-4">
+                        <h1 className="text-3xl md:text-4xl font-black tracking-tight text-foreground">Verify Your Identity</h1>
+                        <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+                            To ensure the safety of our community, we require all users to verify their identity.
+                            Please upload a valid government-issued ID and a selfie.
                         </p>
-                        <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-xs text-muted-foreground hover:text-foreground">
-                            Skip for now (I'll do this later)
-                        </Button>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                        {/* ID Document Upload */}
+                        <Card className="bg-card border-border overflow-hidden group hover:border-primary/50 transition-all">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileCheck className="h-5 w-5 text-primary" />
+                                    Government ID
+                                </CardTitle>
+                                <CardDescription>Upload a clear photo of your ID (Passport, Driver's License, or NIN).</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div
+                                    className={`
+                                        relative border-2 border-dashed rounded-xl p-4 md:p-8 text-center transition-all cursor-pointer
+                                        h-48 md:h-64 flex flex-col items-center justify-center gap-4
+                                        ${idFile ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/50'}
+                                    `}
+                                    onClick={() => document.getElementById('id-upload')?.click()}
+                                >
+                                    <input
+                                        id="id-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => handleFileChange(e, 'id')}
+                                    />
 
-                        {/* Government ID Upload */}
-                        <div className="space-y-4">
-                            <Label className="text-base font-semibold">1. Government Issue ID</Label>
-                            <p className="text-xs text-muted-foreground -mt-3 mb-2">
-                                Passport, Driver's License, or NIN Slip. Clear photo, no glare.
-                            </p>
-
-                            <div
-                                className={`border-2 border-dashed border-border rounded-2xl p-6 text-center hover:bg-muted/50 transition-colors relative ${idPreview ? 'border-primary/50 bg-primary/5' : ''}`}
-                            >
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => handleFileChange(e, 'id')}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                />
-
-                                {idPreview ? (
-                                    <div className="relative h-48 w-full group">
-                                        <img src={idPreview} alt="ID Preview" className="h-full w-full object-contain rounded-lg" />
-                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-                                            <p className="text-white font-medium flex items-center gap-2"><Upload className="h-4 w-4" /> Change File</p>
+                                    {idPreview ? (
+                                        <div className="relative w-full h-full rounded-lg overflow-hidden group-hover:scale-[1.02] transition-transform duration-500">
+                                            <img src={idPreview} alt="ID Preview" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <p className="text-white font-bold flex items-center gap-2">
+                                                    <Upload className="h-4 w-4" /> Change Photo
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2 py-8">
-                                        <div className="mx-auto h-10 w-10 bg-muted rounded-full flex items-center justify-center">
-                                            <Upload className="h-5 w-5 text-muted-foreground" />
-                                        </div>
-                                        <p className="text-sm font-medium">Click to upload ID</p>
-                                        <p className="text-xs text-muted-foreground">PNG, JPG up to 5MB</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-muted flex items-center justify-center mb-2">
+                                                <Upload className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="font-bold text-sm md:text-base">Click to upload ID</p>
+                                                <p className="text-xs text-muted-foreground">JPG, PNG up to 5MB</p>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
 
                         {/* Selfie Upload */}
-                        <div className="space-y-4">
-                            <Label className="text-base font-semibold">2. Selfie with your ID</Label>
-                            <p className="text-xs text-muted-foreground -mt-3 mb-2">
-                                Take a photo holding your ID next to your face. Make sure both are clear.
-                            </p>
+                        <Card className="bg-card border-border overflow-hidden group hover:border-primary/50 transition-all">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Camera className="h-5 w-5 text-primary" />
+                                    Selfie with ID
+                                </CardTitle>
+                                <CardDescription>Take a selfie holding your ID next to your face.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div
+                                    className={`
+                                        relative border-2 border-dashed rounded-xl p-4 md:p-8 text-center transition-all cursor-pointer
+                                        h-48 md:h-64 flex flex-col items-center justify-center gap-4
+                                        ${selfieFile ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/50'}
+                                    `}
+                                    onClick={() => document.getElementById('selfie-upload')?.click()}
+                                >
+                                    <input
+                                        id="selfie-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => handleFileChange(e, 'selfie')}
+                                    />
 
-                            <div
-                                className={`border-2 border-dashed border-border rounded-2xl p-6 text-center hover:bg-muted/50 transition-colors relative ${selfiePreview ? 'border-primary/50 bg-primary/5' : ''}`}
-                            >
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => handleFileChange(e, 'selfie')}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                />
-
-                                {selfiePreview ? (
-                                    <div className="relative h-48 w-full group">
-                                        <img src={selfiePreview} alt="Selfie Preview" className="h-full w-full object-contain rounded-lg" />
-                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-                                            <p className="text-white font-medium flex items-center gap-2"><Camera className="h-4 w-4" /> Change Photo</p>
+                                    {selfiePreview ? (
+                                        <div className="relative w-full h-full rounded-lg overflow-hidden group-hover:scale-[1.02] transition-transform duration-500">
+                                            <img src={selfiePreview} alt="Selfie Preview" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <p className="text-white font-bold flex items-center gap-2">
+                                                    <Upload className="h-4 w-4" /> Change Photo
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2 py-8">
-                                        <div className="mx-auto h-10 w-10 bg-muted rounded-full flex items-center justify-center">
-                                            <Camera className="h-5 w-5 text-muted-foreground" />
-                                        </div>
-                                        <p className="text-sm font-medium">Click to upload Selfie</p>
-                                        <p className="text-xs text-muted-foreground">Make sure face is visible</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-muted flex items-center justify-center mb-2">
+                                                <Camera className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="font-bold text-sm md:text-base">Click to upload Selfie</p>
+                                                <p className="text-xs text-muted-foreground">Make sure face is visible</p>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
 
-                        <Button
-                            type="submit"
-                            className="w-full h-12 text-base font-bold rounded-xl"
-                            disabled={uploading || !idFile || !selfieFile}
-                        >
-                            {uploading ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...
-                                </>
-                            ) : (
-                                "Submit Verification"
-                            )}
-                        </Button>
-
-                    </form>
+                    <Button
+                        onClick={handleSubmit}
+                        className="w-full h-12 text-base font-bold rounded-xl"
+                        disabled={uploading || !idFile || !selfieFile}
+                    >
+                        {uploading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...
+                            </>
+                        ) : (
+                            "Submit Verification"
+                        )}
+                    </Button>
                 </div>
-            </main>
+            </div>
             <Footer />
         </div>
     );

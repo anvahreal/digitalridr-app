@@ -90,7 +90,7 @@ export function Footer() {
             <span>© {currentYear} Digital Ridr</span>
             <span className="hidden md:inline">·</span>
             <Link to="/privacy-policy" className="hover:text-foreground">Privacy</Link>
-            <Link to="#" className="hover:text-foreground">Terms</Link>
+            <Link to="/terms" className="hover:text-foreground">Terms</Link>
           </div>
 
           <div className="flex items-center gap-6">

@@ -19,6 +19,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import LearnMore from "./pages/LearnMore";
 import VerifyIdentity from "./pages/VerifyIdentity";
+import Terms from "./pages/Terms";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<Terms />} />
               <Route path="/learn-more" element={<LearnMore />} />
               <Route path="/search" element={<Search />} />
               <Route path="/dashboard" element={<UserDashboard />} />
