@@ -24,7 +24,8 @@ import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, Dialog
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { Landmark, Loader2 } from "lucide-react";
+import { Landmark } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useEffect } from "react";
 
 const HostDashboard = () => {

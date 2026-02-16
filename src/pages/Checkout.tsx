@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { useListing } from "@/hooks/useListings";
 import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/hooks/useProfile";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { RestrictedPaymentMethod } from "@/components/RestrictedPaymentMethod";
 import { formatNaira } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
@@ -23,7 +24,6 @@ import {
   Building2,
   Plus,
   Minus,
-  Loader2,
   Info,
   Clock,
   Ban,

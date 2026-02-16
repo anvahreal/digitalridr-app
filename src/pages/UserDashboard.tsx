@@ -27,7 +27,6 @@ import {
   AlertCircle,
   Bell,
   Shield,
-  Loader2
 } from "lucide-react";
 import { formatNaira, cn } from "@/lib/utils";
 import { format } from "date-fns";
