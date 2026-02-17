@@ -10,11 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import {
   Home, MessageSquare, Wallet, Plus, Star,
   TrendingUp, Calendar, MapPin, Settings,
-  ChevronRight, LayoutDashboard, AlertCircle, Menu, X, Camera, ShieldCheck
+  ChevronRight, LayoutDashboard, AlertCircle, Menu, X, Camera, ShieldCheck, Clock
 } from "lucide-react";
 import { formatNaira } from "@/lib/utils";
 import { useHostBookings } from "@/hooks/useHostBookings";
 import { useListings } from "@/hooks/useListings";
+import { differenceInDays } from "date-fns";
 
 
 // Sub-Components
@@ -240,6 +241,11 @@ const HostDashboard = () => {
                                       <span>{new Date(b.check_in).toLocaleDateString()}</span>
                                       <span className="text-muted-foreground/50">•</span>
                                       <span>{new Date(b.check_out).toLocaleDateString()}</span>
+                                      <span className="text-muted-foreground/50">•</span>
+                                      <span className="flex items-center gap-1 text-foreground font-bold">
+                                        <Clock className="h-3 w-3" />
+                                        {differenceInDays(new Date(b.check_out), new Date(b.check_in))} nights
+                                      </span>
                                     </p>
                                     <p className="text-sm font-black text-foreground mt-1">{formatNaira(b.total_price)}</p>
                                   </div>

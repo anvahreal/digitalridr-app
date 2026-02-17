@@ -135,6 +135,7 @@ create table if not exists public.conversations (
   host_id uuid references auth.users(id) not null,
   guest_id uuid references auth.users(id) not null,
   listing_id uuid references public.listings(id),
+  status text check (status in ('inquiry', 'confirmed', 'declined')) default 'inquiry',
   last_message text,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null

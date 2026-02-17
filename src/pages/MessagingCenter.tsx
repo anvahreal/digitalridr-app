@@ -13,7 +13,7 @@ import {
   Search, Send, Phone, CheckCheck, Clock, MapPin, Calendar, ChevronLeft, ShieldCheck, MessageSquare
 } from "lucide-react";
 import { useMessages } from "@/hooks/useMessages";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
 export default function MessagingCenter() {
@@ -59,7 +59,7 @@ export default function MessagingCenter() {
       const { data: adminProfile } = await supabase
         .from('profiles')
         .select('id')
-        .eq('email', 'hotmailblvck17@gmail.com') // Hardcoded admin for support
+        .eq('is_admin', true) // Look for ANY admin
         .limit(1)
         .maybeSingle();
 
@@ -209,7 +209,7 @@ export default function MessagingCenter() {
 
                 {/* MOBILE ACTIONS */}
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 text-muted-foreground hover:text-primary"><Phone className="h-4 w-4" /></Button>
+                  {/* Cleaned up unused actions */}
                 </div>
               </div>
 
@@ -292,13 +292,45 @@ export default function MessagingCenter() {
                     <div className="bg-muted p-2 rounded-xl"><Calendar className="h-3.5 w-3.5 text-muted-foreground" /></div>
                     <div>
                       <p className="text-[9px] font-black text-muted-foreground uppercase leading-none">Status</p>
-                      <p className="text-[11px] font-bold text-foreground capitalize">{selectedChat.status}</p>
+                      <p className="text-[11px] font-bold text-foreground capitalize">{selectedChat.status || 'Active'}</p>
                     </div>
                   </div>
+
+                  {/* Duration Display */}
+                  {selectedChat.check_in && selectedChat.check_out && (
+                    <div className="flex items-center gap-3">
+                      <div className="bg-muted p-2 rounded-xl"><Clock className="h-3.5 w-3.5 text-muted-foreground" /></div>
+                      <div>
+                        <p className="text-[9px] font-black text-muted-foreground uppercase leading-none">Duration</p>
+                        <p className="text-[11px] font-bold text-foreground">
+                          {differenceInDays(new Date(selectedChat.check_out), new Date(selectedChat.check_in))} nights
+                        </p>
+                        <p className="text-[9px] text-muted-foreground">
+                          {format(new Date(selectedChat.check_in), "d MMM")} - {format(new Date(selectedChat.check_out), "d MMM")}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedChat.total_price && (
+                    <div className="flex items-center gap-3">
+                      <div className="bg-muted p-2 rounded-xl"><Wallet className="h-3.5 w-3.5 text-muted-foreground" /></div>
+                      <div>
+                        <p className="text-[9px] font-black text-muted-foreground uppercase leading-none">Total</p>
+                        <p className="text-[11px] font-bold text-foreground leading-tight">{formatNaira(selectedChat.total_price)}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-6 pt-5 border-t border-border space-y-2">
                   {/* Actions could be interactive later */}
-                  <Button className="w-full rounded-xl font-black bg-primary text-primary-foreground hover:bg-primary/90 py-6 transition-all">View Listing</Button>
+                  <Button
+                    onClick={() => selectedChat.listing_id && navigate(`/listing/${selectedChat.listing_id}`)}
+                    disabled={!selectedChat.listing_id}
+                    className="w-full rounded-xl font-black bg-primary text-primary-foreground hover:bg-primary/90 py-6 transition-all"
+                  >
+                    View Listing
+                  </Button>
                 </div>
               </CardContent>
             </Card>

@@ -3,6 +3,7 @@ import { Copy, CheckCircle2, Shield, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatNaira } from "@/lib/utils";
+import { BANK_DETAILS } from "@/lib/constants";
 
 interface BankTransferDetailsProps {
     totalAmount: number;
@@ -11,12 +12,7 @@ interface BankTransferDetailsProps {
 export const BankTransferDetails = ({ totalAmount }: BankTransferDetailsProps) => {
     const [copied, setCopied] = useState(false);
 
-    // Mock Bank Details
-    const bankDetails = {
-        bankName: "Zenith Bank",
-        accountNumber: "1229759363",
-        accountName: "Digital Ridr App.",
-    };
+    const bankDetails = BANK_DETAILS;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(bankDetails.accountNumber);

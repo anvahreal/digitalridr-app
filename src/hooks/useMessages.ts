@@ -105,11 +105,41 @@ export function useMessages() {
         });
 
         // Update conversation timestamp locally and on server
-        // (Server trigger would be better but manual update for demo is fine)
         await supabase.from('conversations').update({
             last_message: content,
             updated_at: new Date().toISOString()
         }).eq('id', selectedChatId);
+    };
+
+    const startConversation = async (otherUserId: string, listingId: string) => {
+        if (!user) throw new Error("User not authenticated");
+
+        // 1. Check if conversation already exists
+        const { data: existingConvs } = await supabase
+            .from('conversations')
+            .select('*')
+            .or(`and(host_id.eq.${user.id},guest_id.eq.${otherUserId}),and(host_id.eq.${otherUserId},guest_id.eq.${user.id})`)
+            .eq('listing_id', listingId) // Open specific chat for this listing if possible
+            .limit(1);
+
+        if (existingConvs && existingConvs.length > 0) {
+            return existingConvs[0].id;
+        }
+
+        // 2. Create new conversation
+        const { data: newConv, error } = await supabase
+            .from('conversations')
+            .insert({
+                host_id: otherUserId, // Assuming user is guest contacting host
+                guest_id: user.id,
+                listing_id: listingId,
+                status: 'inquiry'
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return newConv.id;
     };
 
     return {
@@ -119,6 +149,7 @@ export function useMessages() {
         setSelectedChatId,
         loading,
         sendMessage,
+        startConversation,
         currentUserId: user?.id
     };
 }

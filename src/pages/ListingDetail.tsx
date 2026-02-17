@@ -30,8 +30,10 @@ import {
   ChevronRight,
   ShieldCheck,
   Calendar as CalendarIcon,
+  MessageCircle
 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useMessages } from "@/hooks/useMessages";
 import { format, differenceInDays } from "date-fns";
 import { cn, formatNaira } from "@/lib/utils";
 import { toast } from "sonner";
@@ -70,6 +72,7 @@ const ListingDetail = () => {
 
   // Reviews State
   const { user } = useAuth();
+  const { startConversation } = useMessages();
   const [reviews, setReviews] = useState<any[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [newReviewRating, setNewReviewRating] = useState(5);
@@ -134,6 +137,30 @@ const ListingDetail = () => {
     } catch (e: any) {
       console.error("Review Error:", e);
       toast.error("Failed to submit review.");
+    }
+  };
+
+
+
+  // Handle Contact Host
+  const handleContactHost = async () => {
+    if (!user) {
+      toast.error("Please login to contact the host");
+      navigate('/auth');
+      return;
+    }
+
+    if (user.id === listing.host_id) {
+      toast.error("You cannot message yourself!");
+      return;
+    }
+
+    try {
+      const conversationId = await startConversation(listing.host_id, listing.id);
+      navigate('/host/messages', { state: { selectedChatId: conversationId } });
+    } catch (err) {
+      console.error("Contact Host Error:", err);
+      toast.error("Failed to open conversation");
     }
   };
 
@@ -230,6 +257,18 @@ const ListingDetail = () => {
       toast.error("Please select check-in and check-out dates");
       return;
     }
+
+    // Double Booking Check: Ensure no disabled dates fall within the selected range
+    const isRangeBlocked = disabledDates.some(disabledDate => {
+      const date = new Date(disabledDate);
+      return date >= checkIn && date <= checkOut;
+    });
+
+    if (isRangeBlocked) {
+      toast.error("Some dates in your range are already booked. Please select different dates.");
+      return;
+    }
+
     const params = new URLSearchParams({
       listing: listing.id,
       checkIn: checkIn.toISOString(),
@@ -580,6 +619,8 @@ const ListingDetail = () => {
 
                 {/* Booking Interface */}
                 <div className="mb-4 overflow-hidden rounded-xl border border-border">
+
+
                   <div className="grid grid-cols-2 divide-x divide-border border-b border-border">
                     <Popover>
                       <PopoverTrigger asChild>
@@ -613,10 +654,28 @@ const ListingDetail = () => {
                           mode="single"
                           selected={checkOut}
                           onSelect={setCheckOut}
-                          disabled={(date) =>
-                            date < (checkIn || new Date()) ||
-                            disabledDates.some(d => d.toDateString() === date.toDateString())
-                          }
+                          disabled={(date) => {
+                            // 1. Basic checks: Past dates, before check-in, or explicitly disabled
+                            if (date < (checkIn || new Date()) || disabledDates.some(d => d.toDateString() === date.toDateString())) {
+                              return true;
+                            }
+
+                            // 2. Prevent selecting a checkout date that would span across a booked period
+                            if (checkIn) {
+                              // Find the first blocked date *after* check-in
+                              const nextBlockedDate = disabledDates
+                                .map(d => new Date(d))
+                                .sort((a, b) => a.getTime() - b.getTime())
+                                .find(d => d > checkIn);
+
+                              // If such a date exists, disable everything after it
+                              if (nextBlockedDate && date > nextBlockedDate) {
+                                return true;
+                              }
+                            }
+
+                            return false;
+                          }}
                         />
                       </PopoverContent>
                     </Popover>
@@ -666,6 +725,32 @@ const ListingDetail = () => {
                     Includes refundable security deposit of {formatNaira(listing.security_deposit)}
                   </p>
                 )}
+
+                <div className="mt-4 pt-4 border-t border-border/50 text-center">
+                  <Button
+                    variant="ghost"
+                    className="w-full text-muted-foreground hover:text-foreground hover:bg-muted font-semibold text-sm h-auto py-2"
+                    onClick={async () => {
+                      if (!user) {
+                        toast.error("Please login to contact the host");
+                        return;
+                      }
+                      try {
+                        // Import usage dynamically or use hook at top level
+                        toast.loading("Opening chat...");
+                        // Note: useMessages hook needs to be instantiated at top level
+                        // We'll call the handleContactHost function we'll define in the component body
+                        handleContactHost();
+                      } catch (err) {
+                        console.error(err);
+                        toast.error("Failed to start chat");
+                      }
+                    }}
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Contact Host regarding this Listing
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
