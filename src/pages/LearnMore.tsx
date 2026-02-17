@@ -4,10 +4,13 @@ import { Shield, CreditCard, Heart, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { useMessages } from "@/hooks/useMessages";
+import { toast } from "sonner";
 
 const LearnMore = () => {
     const navigate = useNavigate();
     const { hash } = useLocation();
+    const { contactSupport } = useMessages();
 
     useEffect(() => {
         if (hash) {
@@ -181,27 +184,28 @@ const LearnMore = () => {
                     <div className="bg-card border border-border rounded-[2rem] p-8 md:p-12 text-center space-y-6">
                         <h2 className="text-3xl font-black text-foreground">Need Support?</h2>
                         <p className="text-muted-foreground max-w-xl mx-auto">
-                            Our support team is available 24/7 to assist you with any questions, booking modifications, or concerns.
+                            Our support team is available to assist you with any questions, booking modifications, or concerns.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Button className="rounded-2xl font-bold h-12 px-8 bg-black text-white hover:bg-black/80">
-                                Contact Guests Support
-                            </Button>
-                            <Button variant="outline" className="rounded-2xl font-bold h-12 px-8">
-                                Contact Host Support
+                            <Button
+                                onClick={async () => {
+                                    try {
+                                        const chatId = await contactSupport();
+                                        navigate('/messages', { state: { selectedChatId: chatId } });
+                                    } catch (err: any) {
+                                        toast.error(err.message);
+                                    }
+                                }}
+                                className="rounded-2xl font-bold h-12 px-8 bg-black text-white hover:bg-black/80"
+                            >
+                                Contact Support
                             </Button>
                         </div>
                         <p className="text-xs text-muted-foreground pt-4">
-                            You can also email us at <a href="mailto:support@digitalridr.com" className="text-primary hover:underline">support@digitalridr.com</a>
+                            You can also email us at <a href="mailto:digitalridr.travels.apts@gmail.com" className="text-primary hover:underline">digitalridr.travels.apts@gmail.com</a>
                         </p>
                     </div>
                 </section>
-
-                <div className="pt-8 text-center">
-                    <Button onClick={() => navigate('/')} size="lg" className="rounded-2xl font-bold px-8 h-14 text-base">
-                        Start Exploring
-                    </Button>
-                </div>
 
             </main>
 

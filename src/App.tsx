@@ -84,6 +84,11 @@ const App = () => (
                   <MessagingCenter />
                 </ProtectedRoute>
               } />
+              <Route path="/messages" element={
+                <ProtectedRoute>
+                  <MessagingCenter />
+                </ProtectedRoute>
+              } />
 
               {/* Admin Route */}
               <Route path="/admin" element={
