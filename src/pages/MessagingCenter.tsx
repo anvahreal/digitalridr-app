@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import {
-  Search, Send, Phone, CheckCheck, Clock, MapPin, Calendar, ChevronLeft, ShieldCheck, MessageSquare
+  Search, Send, Phone, CheckCheck, Clock, MapPin, Calendar, ChevronLeft, ShieldCheck, MessageSquare, ExternalLink
 } from "lucide-react";
 import { useMessages } from "@/hooks/useMessages";
 import { format, differenceInDays } from "date-fns";
@@ -209,7 +209,16 @@ export default function MessagingCenter() {
 
                 {/* MOBILE ACTIONS */}
                 <div className="flex items-center gap-2">
-                  {/* Cleaned up unused actions */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full h-9 w-9 text-muted-foreground hover:text-primary"
+                    onClick={() => selectedChat.listing_id && navigate(`/listing/${selectedChat.listing_id}`)}
+                    disabled={!selectedChat.listing_id}
+                    title="View Listing"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
 
