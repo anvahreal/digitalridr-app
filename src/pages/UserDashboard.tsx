@@ -257,54 +257,66 @@ const UserDashboard = () => {
                                 </p>
                               </div>
                               <div className="hidden md:block text-right">
-                                <span className="font-black text-xl text-foreground block">{formatNaira(booking.total_price)}</span>
-                                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Total</span>
+                                {/* Price moved to bottom for better layout */}
                               </div>
                             </div>
 
 
-                            {/* Footer Actions */}
-                            <div className="mt-auto flex items-center justify-between pt-3 border-t border-dashed border-border/40">
-                              <div className="flex flex-col md:hidden">
-                                <span className="font-black text-lg text-foreground">{formatNaira(booking.total_price)}</span>
-                              </div>
+                            {/* Footer Actions - Redesigned for better space usage */}
+                            <div className="mt-auto pt-4 border-t border-dashed border-border/40">
+                              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                                {/* Left Side: Price & Ref */}
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-baseline gap-2">
+                                    <span className="font-black text-2xl text-foreground tracking-tight">
+                                      {formatNaira(booking.total_price)}
+                                    </span>
+                                    <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest self-center">
+                                      Total
+                                    </span>
+                                  </div>
+                                  <div className="font-mono text-[10px] font-bold text-muted-foreground bg-muted/50 px-2 py-1 rounded w-fit">
+                                    REF: {booking.id.split('-')[0].toUpperCase()}
+                                  </div>
+                                </div>
 
-                              <div className="font-mono text-[10px] font-bold text-muted-foreground bg-muted px-2 py-1 rounded hidden md:block">
-                                REF: {booking.id.split('-')[0].toUpperCase()}
-                              </div>
+                                {/* Right Side: Actions */}
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {booking.status === 'confirmed' && (booking.listings?.latitude || booking.listings?.address) && (
+                                    <Button
+                                      size="sm"
+                                      variant="default"
+                                      onClick={() => {
+                                        const { latitude, longitude, address, location } = booking.listings || {};
+                                        const destination = latitude && longitude ? `${latitude},${longitude}` : encodeURIComponent(address || location);
+                                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}`, '_blank');
+                                      }}
+                                      className="h-10 px-4 rounded-xl font-bold text-xs bg-[#00AEEF] hover:bg-[#00AEEF]/90 text-white shadow-lg shadow-blue-500/20 shrink-0"
+                                    >
+                                      <MapPin className="h-4 w-4 mr-2" /> Live Directions
+                                    </Button>
+                                  )}
 
-                              <div className="flex gap-2 ml-auto">
-                                {booking.status === 'confirmed' && (booking.listings?.latitude || booking.listings?.address) && (
+                                  {booking.status === 'pending' && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleManageBooking(booking)}
+                                      className="h-10 px-4 rounded-xl font-bold text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50 shrink-0"
+                                    >
+                                      Cancel Request
+                                    </Button>
+                                  )}
+
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => {
-                                      const { latitude, longitude, address, location } = booking.listings || {};
-                                      const destination = latitude && longitude ? `${latitude},${longitude}` : encodeURIComponent(address || location);
-                                      window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}`, '_blank');
-                                    }}
-                                    className="h-9 rounded-xl font-bold text-xs border-[#00AEEF] text-[#00AEEF] hover:bg-[#00AEEF]/10 gap-2"
-                                  >
-                                    <MapPin className="h-3.5 w-3.5" /> Live Directions
-                                  </Button>
-                                )}
-                                {booking.status === 'pending' && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
                                     onClick={() => handleManageBooking(booking)}
-                                    className="h-9 rounded-xl font-bold text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                    className="h-10 px-4 rounded-xl font-bold text-xs border-border hover:bg-muted shrink-0"
                                   >
-                                    Cancel Request
+                                    {booking.status === 'confirmed' ? 'Manage' : 'Details'}
                                   </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleManageBooking(booking)}
-                                  className="h-9 rounded-xl font-bold text-xs bg-foreground text-background hover:bg-foreground/90 shadow-lg shadow-foreground/10"
-                                >
-                                  {booking.status === 'confirmed' ? 'Manage Booking' : 'View Details'}
-                                </Button>
+                                </div>
                               </div>
                             </div>
                           </div>
