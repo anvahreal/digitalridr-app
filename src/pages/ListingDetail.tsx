@@ -157,9 +157,11 @@ const ListingDetail = () => {
 
     try {
       const conversationId = await startConversation(listing.host_id, listing.id);
+      toast.dismiss(); // Dismiss loading toast
       navigate('/host/messages', { state: { selectedChatId: conversationId } });
     } catch (err) {
       console.error("Contact Host Error:", err);
+      toast.dismiss();
       toast.error("Failed to open conversation");
     }
   };

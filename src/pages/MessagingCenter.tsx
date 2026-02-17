@@ -209,16 +209,18 @@ export default function MessagingCenter() {
 
                 {/* MOBILE ACTIONS */}
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full h-9 w-9 text-muted-foreground hover:text-primary"
-                    onClick={() => selectedChat.listing_id && navigate(`/listing/${selectedChat.listing_id}`)}
-                    disabled={!selectedChat.listing_id}
-                    title="View Listing"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 rounded-full border-primary/20 text-primary font-bold text-xs gap-1.5 px-3 hover:bg-primary/10"
+                      onClick={() => selectedChat.listing_id && navigate(`/listing/${selectedChat.listing_id}`)}
+                      disabled={!selectedChat.listing_id}
+                    >
+                      Listing
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               </div>
 
