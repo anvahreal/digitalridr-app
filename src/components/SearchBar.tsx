@@ -65,7 +65,19 @@ export function SearchBar({ variant = "hero", className }: SearchBarProps) {
               />
             </button>
           </PopoverTrigger>
-          {/* ... (PopoverContent stays the same) */}
+          <PopoverContent className="p-0 w-[300px]" align="start">
+            <div className="p-4 space-y-2">
+              <h4 className="font-medium text-sm text-foreground">Popular Destinations</h4>
+              <div className="grid grid-cols-1 gap-1">
+                {["Ikoyi", "Lekki Phase 1", "Victoria Island", "Ikeja", "Surulere"].map((loc) => (
+                  <Button key={loc} variant="ghost" className="justify-start font-normal" onClick={() => { setLocation(loc); setActiveTab(null); }}>
+                    <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                    {loc}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </PopoverContent>
         </Popover>
 
         {/* Mobile Divider */}
@@ -87,7 +99,18 @@ export function SearchBar({ variant = "hero", className }: SearchBarProps) {
                 </span>
               </button>
             </PopoverTrigger>
-            {/* ... (Calendar content stays same) */}
+            <PopoverContent className="w-auto p-0" align="start">
+              <CalendarComponent
+                mode="single"
+                selected={checkIn}
+                onSelect={(date) => {
+                  setCheckIn(date);
+                  setActiveTab("checkOut");
+                }}
+                initialFocus
+                disabled={(date) => date < new Date()}
+              />
+            </PopoverContent>
           </Popover>
 
           <div className="h-8 w-px bg-border self-center" />
@@ -106,7 +129,18 @@ export function SearchBar({ variant = "hero", className }: SearchBarProps) {
                 </span>
               </button>
             </PopoverTrigger>
-            {/* ... (Calendar content stays same) */}
+            <PopoverContent className="w-auto p-0" align="start">
+              <CalendarComponent
+                mode="single"
+                selected={checkOut}
+                onSelect={(date) => {
+                  setCheckOut(date);
+                  setActiveTab("guests");
+                }}
+                initialFocus
+                disabled={(date) => (checkIn ? date <= checkIn : date < new Date())}
+              />
+            </PopoverContent>
           </Popover>
         </div>
 
@@ -129,13 +163,42 @@ export function SearchBar({ variant = "hero", className }: SearchBarProps) {
                 </span>
               </button>
             </PopoverTrigger>
-            {/* ... (PopoverContent stays same) */}
+            <PopoverContent className="w-80 p-0" align="end">
+              <div className="p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-foreground">Adults</h4>
+                    <p className="text-sm text-muted-foreground">Ages 13 or above</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full border-border"
+                      onClick={() => setGuests(Math.max(1, guests - 1))}
+                      disabled={guests <= 1}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="font-bold w-4 text-center">{guests}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full border-border"
+                      onClick={() => setGuests(guests + 1)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
           </Popover>
 
           <div className="hidden sm:block h-8 w-px bg-border" />
 
           <Button
-            variant="search"
+            variant="default"
             size={isHero ? "lg" : "default"}
             className={cn(
               "shrink-0 rounded-full h-12 w-12 sm:w-auto sm:h-12 flex items-center justify-center sm:px-6 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20",

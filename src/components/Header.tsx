@@ -55,18 +55,20 @@ export function Header() {
 
         {!location.pathname.includes("/host") && (
           <div className="hidden md:flex items-center">
-            <button className="flex items-center gap-4 rounded-full border border-border bg-card px-6 py-2.5 shadow-sm hover:shadow-md transition-all">
-              <span className="font-bold text-sm text-foreground">Anywhere</span>
-              <span className="h-4 w-px bg-border" />
-              <span className="font-bold text-sm text-foreground">Any week</span>
-              <span className="h-4 w-px bg-border" />
-              <span className="text-muted-foreground text-sm font-medium">
-                Add guests
-              </span>
-              <div className="ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#F48221] text-white">
-                <Search className="h-4 w-4 stroke-[3px]" />
-              </div>
-            </button>
+            <Link to="/search">
+              <button className="flex items-center gap-4 rounded-full border border-border bg-card px-6 py-2.5 shadow-sm hover:shadow-md transition-all">
+                <span className="font-bold text-sm text-foreground">Anywhere</span>
+                <span className="h-4 w-px bg-border" />
+                <span className="font-bold text-sm text-foreground">Any week</span>
+                <span className="h-4 w-px bg-border" />
+                <span className="text-muted-foreground text-sm font-medium">
+                  Add guests
+                </span>
+                <div className="ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#F48221] text-white">
+                  <Search className="h-4 w-4 stroke-[3px]" />
+                </div>
+              </button>
+            </Link>
           </div>
         )}
 

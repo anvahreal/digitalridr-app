@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import {
   ChevronLeft, Camera, MapPin, Search,
   CheckCircle2, Plus, Minus, Home, Sparkles, X, Play, Video,
-  Check, ChevronsUpDown, DollarSign, Calendar, Shield, ArrowRight
+  Check, ChevronsUpDown, DollarSign, Calendar, Shield, ArrowRight, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatNaira } from "@/lib/utils";
@@ -698,7 +698,7 @@ const CreateListing = () => {
               {/* CHECK-IN INFO (New Section) */}
               <div className="bg-card border border-border rounded-[2rem] p-6 space-y-4">
                 <h3 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1 flex items-center gap-2">
-                  <span className="bg-emerald-500/10 text-emerald-600 p-1 rounded-md">Guest Access</span>
+                  <span className="bg-emerald-500/10 text-emerald-600 p-1 rounded-md">Guest Access (Optional)</span>
                   (Visible only after booking)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -716,15 +716,15 @@ const CreateListing = () => {
                   />
                   <FormInput
                     label="Access Code / Key Box"
-                    placeholder="e.g. 1234 or Lobby"
+                    placeholder="e.g. 1234 or Lobby (Optional)"
                     value={formData.access_code}
                     onChange={(e: any) => handleInputChange("access_code", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">Special Check-in Instructions</label>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground ml-1 tracking-widest">Special Check-in Instructions (Optional)</label>
                   <Textarea
-                    placeholder="e.g. The key is under the mat, gate code is *777#..."
+                    placeholder="e.g. The key is under the mat, gate code is *777# (Optional)..."
                     className="min-h-[80px] bg-muted border-none rounded-2xl p-4 font-medium text-foreground resize-none focus-visible:ring-2 focus-visible:ring-primary/20"
                     value={formData.check_in_instructions}
                     onChange={(e: any) => handleInputChange("check_in_instructions", e.target.value)}

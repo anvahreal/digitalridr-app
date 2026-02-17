@@ -53,6 +53,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const AdminDashboard = () => {
@@ -184,11 +185,16 @@ const AdminDashboard = () => {
 
     const handleDeleteListing = async (id: string) => {
         if (!confirm("Are you sure you want to delete this listing? This action cannot be undone.")) return;
-        const { error } = await supabase.from('listings').delete().eq('id', id);
-        if (error) toast.error("Failed to delete listing");
-        else {
+
+        try {
+            const { error } = await supabase.from('listings').delete().eq('id', id);
+            if (error) throw error;
+
             toast.success("Listing deleted successfully");
             fetchData();
+        } catch (error: any) {
+            console.error("Delete error:", error);
+            toast.error(error.message || "Failed to delete listing");
         }
     };
 
@@ -389,7 +395,6 @@ const AdminDashboard = () => {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="h-8 px-3 text-[10px] font-black uppercase tracking-wider bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white rounded-xl transition-all opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 duration-300"
                                                             onClick={() => handleDeleteListing(l.id)}
                                                         >
                                                             Delete
@@ -576,7 +581,7 @@ const AdminDashboard = () => {
 
                             <div className="space-y-4">
                                 <h3 className="text-lg font-bold">Recent Host Activity</h3>
-                                <HostTable hosts={hosts} onBan={handleBanHost} onUpdateStatus={handleUpdateHostStatus} limit={5} onViewProperties={setSelectedHost} />
+                                <HostTable hosts={hosts} onBan={handleBanHost} onUpdateStatus={handleUpdateHostStatus} limit={5} onViewProperties={setSelectedHost} onMessage={handleMessageHost} onDelete={handleDeleteListing} />
                             </div>
                         </TabsContent>
 
@@ -587,7 +592,7 @@ const AdminDashboard = () => {
                                     <CardTitle>All Hosts</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <HostTable hosts={filteredHosts} onBan={handleBanHost} onUpdateStatus={handleUpdateHostStatus} onViewProperties={setSelectedHost} />
+                                    <HostTable hosts={filteredHosts} onBan={handleBanHost} onUpdateStatus={handleUpdateHostStatus} onViewProperties={setSelectedHost} onMessage={handleMessageHost} onDelete={handleDeleteListing} />
                                 </CardContent>
                             </Card>
                         </TabsContent>
@@ -857,8 +862,8 @@ const AdminDashboard = () => {
 
                     </Tabs>
                 </div>
-            </main>
-        </div>
+            </main >
+        </div >
     );
 };
 
@@ -928,7 +933,7 @@ const AnalyticsStatsCard = ({ title, value, icon: Icon, trend, trendUp, color }:
     </Card>
 );
 
-const HostTable = ({ hosts, onBan, onUpdateStatus, limit, onViewProperties, onMessage }: any) => {
+const HostTable = ({ hosts, onBan, onUpdateStatus, limit, onViewProperties, onMessage, onDelete }: any) => {
     const displayHosts = limit ? hosts.slice(0, limit) : hosts;
 
     return (
@@ -1080,33 +1085,10 @@ const HostTable = ({ hosts, onBan, onUpdateStatus, limit, onViewProperties, onMe
                                                 <Mail className="mr-3 h-4 w-4 text-muted-foreground group-hover/item:text-foreground" />
                                                 Send Email
                                             </DropdownMenuItem>
-                                            {/* Note: handleMessageHost needs to be passed in or available in scope. Assuming it is NOT available here based on previous code. 
-                                                The previous code didn't pass handleMessageHost to HostTable, it used it in DropdownMenuItem but HostTable didn't have it in props?
-                                                Wait, looking at line 839: const HostTable = ({ hosts, onBan, onUpdateStatus, limit, onViewProperties }: any) => {
-                                                But in line 933 it calls handleMessageHost(h.id). 
-                                                Where does handleMessageHost come from? It's defined in AdminDashboard component, not HostTable.
-                                                Ah, HostTable is defined OUTSIDE AdminDashboard component in the original file (line 839).
-                                                So handleMessageHost is NOT available in HostTable unless passed as prop.
-                                                Checking line 523 and 534 in original file...
-                                                <HostTable hosts={filteredHosts} onBan={handleBanHost} onUpdateStatus={handleUpdateHostStatus} limit={5} onViewProperties={setSelectedHost} />
-                                                It seems handleMessageHost was NOT passed. The original code at line 933 calls handleMessageHost(h.id).
-                                                This implies handleMessageHost MUST be available in HostTable scope.
-                                                But HostTable is defined at line 839, outside AdminDashboard?
-                                                Let me check the file content again in step 172.
-                                                Yes, HostTable is outside.
-                                                And handleMessageHost is inside AdminDashboard (line 175).
-                                                So the original code was likely BROKEN regarding handleMessageHost in the dropdown?
-                                                Or maybe I missed something.
-                                                Wait, line 933: onClick={() => handleMessageHost(h.id)}.
-                                                If HostTable is outside, this would error "handleMessageHost is not defined".
-                                                Unless... I need to pass it as a prop.
-                                                I will add it as a prop to HostTable and pass it from AdminDashboard.
-                                            */}
-                                            <DropdownMenuMenuItemWrapper onMessage={() => handleMessageHost(h.id)} />
-                                            {/* Wait, I can't easily fix the prop drill without changing the usage sites too. 
-                                                I will assume for now I should fix the prop passing.
-                                                I'll add `onMessage` to props.
-                                            */}
+                                            <DropdownMenuItem className="rounded-xl font-bold cursor-pointer py-2.5 px-3 focus:bg-accent focus:text-accent-foreground transition-colors group/item" onClick={() => onMessage(h.id)}>
+                                                <MessageSquare className="mr-3 h-4 w-4 text-muted-foreground group-hover/item:text-foreground" />
+                                                Message User
+                                            </DropdownMenuItem>
                                             <DropdownMenuSeparator className="bg-border/50 mx-2" />
                                             <DropdownMenuItem
                                                 className={`rounded-xl font-black cursor-pointer py-2.5 px-3 mt-1 transition-colors ${h.banned ? 'text-emerald-500 focus:text-emerald-500 focus:bg-emerald-500/10' : 'text-red-500 focus:text-red-500 focus:bg-red-500/10'}`}
@@ -1153,8 +1135,8 @@ const HostTable = ({ hosts, onBan, onUpdateStatus, limit, onViewProperties, onMe
                 </table>
             </div>
         </>
-    )
-}
+    );
+};
 
 // Helper to avoid scope issues if any, but simplified for now
 const DropdownMenuMenuItemWrapper = ({ onMessage }: any) => (
