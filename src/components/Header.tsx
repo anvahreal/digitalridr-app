@@ -161,9 +161,6 @@ export function Header() {
                   Host your home
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="rounded-xl focus:bg-accent focus:text-accent-foreground py-2 cursor-pointer">
-                Help Center
-              </DropdownMenuItem>
               <div className="md:hidden">
                 <DropdownMenuSeparator className="my-2 bg-border" />
                 <div className="p-2 flex items-center justify-between">

@@ -27,6 +27,7 @@ import {
   AlertCircle,
   Bell,
   Shield,
+  MessageSquare,
 } from "lucide-react";
 import { formatNaira, cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -37,6 +38,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ManageBookingDialog, BookingReceipt } from "@/components/BookingActions";
 import { useUserBookings } from "@/hooks/useUserBookings";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useMessages } from "@/hooks/useMessages";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -47,6 +49,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 const UserDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("stays");
+  const { contactSupport } = useMessages();
   const { user, profile, loading, updateProfile } = useProfile();
   const { bookings, loading: bookingsLoading } = useUserBookings();
   const { favorites, loading: favoritesLoading, toggleFavorite } = useFavorites();
@@ -134,6 +137,7 @@ const UserDashboard = () => {
                   { id: "favorites", label: "Favorites", icon: Heart },
                   { id: "profile", label: "Profile", icon: User },
                   { id: "settings", label: "Settings", icon: Settings },
+                  { id: "support", label: "Support", icon: MessageSquare },
                 ].map((nav) => (
                   <button
                     key={nav.id}
@@ -236,7 +240,7 @@ const UserDashboard = () => {
                             <div className="absolute top-3 left-3 flex flex-col gap-2">
                               {booking.status === 'confirmed' ? (
                                 <Badge className="bg-white/90 backdrop-blur-md text-emerald-600 border-white/20 shadow-sm">
-                                  {booking.payment_status === 'paid' ? 'Paid' : 'Confirmed'}
+                                  {(booking as any).payment_status === 'paid' ? 'Paid' : 'Confirmed'}
                                 </Badge>
                               ) : booking.status === 'pending' ? (
                                 <Badge variant="secondary" className="bg-white/90 backdrop-blur-md text-orange-600 border-white/20 shadow-sm">
@@ -439,11 +443,11 @@ const UserDashboard = () => {
                       </p>
                       <Badge variant="outline" className={cn(
                         "rounded-full px-3 py-0.5 text-[10px] border-border uppercase tracking-widest",
-                        (profile?.is_verified || bookings.some(b => b.status === 'confirmed'))
+                        ((profile as any)?.is_verified || bookings.some(b => b.status === 'confirmed'))
                           ? "text-emerald-500 border-emerald-500/20 bg-emerald-500/5"
                           : "text-muted-foreground"
                       )}>
-                        {(profile?.is_verified || bookings.some(b => b.status === 'confirmed')) ? "Verified Guest" : "Standard Guest"}
+                        {((profile as any)?.is_verified || bookings.some(b => b.status === 'confirmed')) ? "Verified Guest" : "Standard Guest"}
                       </Badge>
                     </div>
                   </div>
@@ -531,6 +535,46 @@ const UserDashboard = () => {
                           <p className="text-xs text-muted-foreground">Permanently delete your account and data.</p>
                         </div>
                         <Button variant="ghost" className="rounded-xl text-red-500 font-bold hover:bg-red-500/10">Delete</Button>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              )}
+
+              {/* SUPPORT TAB */}
+              {activeTab === "support" && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <Card className="border-none shadow-sm rounded-3xl bg-card p-6 md:p-8">
+                    <div className="text-center max-w-lg mx-auto py-8">
+                      <div className="h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <MessageSquare className="h-10 w-10 text-primary" />
+                      </div>
+                      <h2 className="text-2xl font-black text-foreground mb-3">
+                        Need Help?
+                      </h2>
+                      <p className="text-muted-foreground font-medium mb-8">
+                        Our support team is available to assist you with any questions, booking modifications, or concerns.
+                      </p>
+
+                      <div className="space-y-4">
+                        <Button
+                          onClick={async () => {
+                            try {
+                              const chatId = await contactSupport();
+                              navigate('/messages', { state: { selectedChatId: chatId } });
+                            } catch (err: any) {
+                              toast.error(err.message);
+                            }
+                          }}
+                          className="w-full h-12 rounded-xl font-black text-base shadow-lg shadow-primary/20"
+                        >
+                          Chat with Support
+                        </Button>
+
+                        <div className="p-4 rounded-xl bg-muted/50 mt-6">
+                          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mb-1">Email Us</p>
+                          <p className="font-bold text-foreground select-all">digitalridr.travels.apts@gmail.com</p>
+                        </div>
                       </div>
                     </div>
                   </Card>

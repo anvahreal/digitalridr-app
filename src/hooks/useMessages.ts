@@ -142,6 +142,52 @@ export function useMessages() {
         return newConv.id;
     };
 
+    const contactSupport = async () => {
+        if (!user) throw new Error("User not authenticated");
+
+        // Find Admin
+        const { data: adminProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('is_admin', true) // Look for ANY admin
+            .limit(1)
+            .maybeSingle();
+
+        if (!adminProfile) {
+            throw new Error("Support currently unavailable (Admin profile not found)");
+        }
+
+        if (adminProfile.id === user.id) {
+            throw new Error("You are the super admin.");
+        }
+
+        // Check if conversation exists
+        const { data: existingConvs } = await supabase
+            .from('conversations')
+            .select('id')
+            .or(`and(host_id.eq.${user.id},guest_id.eq.${adminProfile.id}),and(host_id.eq.${adminProfile.id},guest_id.eq.${user.id})`)
+            .limit(1)
+            .maybeSingle();
+
+        if (existingConvs) {
+            return existingConvs.id;
+        }
+
+        // Create new conversation
+        const { data: newConv, error } = await supabase
+            .from('conversations')
+            .insert({
+                host_id: adminProfile.id,
+                guest_id: user.id,
+                status: 'inquiry'
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return newConv.id;
+    };
+
     return {
         conversations,
         messages,
@@ -150,6 +196,7 @@ export function useMessages() {
         loading,
         sendMessage,
         startConversation,
+        contactSupport,
         currentUserId: user?.id
     };
 }

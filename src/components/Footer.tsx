@@ -6,7 +6,6 @@ export function Footer() {
 
   const footerLinks = {
     support: [
-      { label: "Help Center", href: "/learn-more#support" },
       { label: "Safety info", href: "/learn-more#safety" },
       { label: "Cancellations", href: "/learn-more#cancellation" },
     ],
