@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useProfile } from './useProfile';
+import { toast } from "sonner";
 
 export interface Booking {
     id: string;
@@ -21,6 +22,8 @@ export interface Booking {
         wifi_password?: string;
         access_code?: string;
         check_in_instructions?: string;
+        latitude?: number;
+        longitude?: number;
     };
 }
 
@@ -46,7 +49,9 @@ export const useUserBookings = () => {
               wifi_name,
               wifi_password,
               access_code,
-              check_in_instructions
+              check_in_instructions,
+              latitude,
+              longitude
             )
           `)
                     .eq('guest_id', user.id)

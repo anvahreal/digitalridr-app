@@ -46,7 +46,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("trips");
+  const [activeTab, setActiveTab] = useState("stays");
   const { user, profile, loading, updateProfile } = useProfile();
   const { bookings, loading: bookingsLoading } = useUserBookings();
   const { favorites, loading: favoritesLoading, toggleFavorite } = useFavorites();
@@ -130,7 +130,7 @@ const UserDashboard = () => {
             <aside className="hidden lg:block space-y-6 sticky top-24 self-start max-h-[calc(100vh-8rem)] overflow-y-auto no-scrollbar">
               <div className="space-y-1">
                 {[
-                  { id: "trips", label: "My Stays", icon: Calendar },
+                  { id: "stays", label: "My Stays", icon: Calendar },
                   { id: "favorites", label: "Favorites", icon: Heart },
                   { id: "profile", label: "Profile", icon: User },
                   { id: "settings", label: "Settings", icon: Settings },
@@ -148,7 +148,8 @@ const UserDashboard = () => {
                     <nav.icon className={cn("h-4 w-4", activeTab === nav.id ? "text-[#F48221]" : "opacity-70")} />
                     {nav.label}
                   </button>
-                ))}
+                ))
+                }
               </div>
 
               <Separator className="bg-border" />
@@ -165,7 +166,7 @@ const UserDashboard = () => {
             <div className="block lg:hidden overflow-x-auto pb-4 -mx-4 px-4 no-scrollbar">
               <div className="flex gap-2 min-w-max">
                 {[
-                  { id: "trips", label: "Trips", icon: Calendar },
+                  { id: "stays", label: "Stays", icon: Calendar },
                   { id: "favorites", label: "Saved", icon: Heart },
                   { id: "profile", label: "User", icon: User },
                   { id: "settings", label: "Settings", icon: Settings },
@@ -189,8 +190,8 @@ const UserDashboard = () => {
 
             {/* Main Section */}
             <div className="space-y-8">
-              {/* TRIPS TAB */}
-              {activeTab === "trips" && (
+              {/* STAYS TAB */}
+              {activeTab === "stays" && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-black text-foreground">My Bookings</h2>
@@ -273,6 +274,20 @@ const UserDashboard = () => {
                               </div>
 
                               <div className="flex gap-2 ml-auto">
+                                {booking.status === 'confirmed' && (booking.listings?.latitude || booking.listings?.address) && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const { latitude, longitude, address, location } = booking.listings || {};
+                                      const destination = latitude && longitude ? `${latitude},${longitude}` : encodeURIComponent(address || location);
+                                      window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}`, '_blank');
+                                    }}
+                                    className="h-9 rounded-xl font-bold text-xs border-[#00AEEF] text-[#00AEEF] hover:bg-[#00AEEF]/10 gap-2"
+                                  >
+                                    <MapPin className="h-3.5 w-3.5" /> Live Directions
+                                  </Button>
+                                )}
                                 {booking.status === 'pending' && (
                                   <Button
                                     size="sm"

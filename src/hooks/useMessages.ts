@@ -31,14 +31,14 @@ export function useMessages() {
                     const otherUserId = conv.host_id === user.id ? conv.guest_id : conv.host_id;
                     const { data: profile } = await supabase
                         .from('profiles')
-                        .select('first_name, last_name, avatar_url')
+                        .select('full_name, avatar_url')
                         .eq('id', otherUserId)
-                        .single();
+                        .maybeSingle();
 
                     return {
                         ...conv,
                         other_user: {
-                            full_name: profile ? `${profile.first_name} ${profile.last_name}` : 'Unknown User',
+                            full_name: profile?.full_name || 'Unknown User',
                             avatar_url: profile?.avatar_url || ''
                         }
                     };
