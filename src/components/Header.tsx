@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { ModeToggle } from "@/components/ModeToggle";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -74,6 +75,7 @@ export function Header() {
 
         {/* Right Menu */}
         <div className="flex items-center gap-2 md:gap-4">
+          <NotificationBell />
           <div className="hidden lg:block">
             {profile?.is_host ? (
               <span className="text-sm font-bold text-muted-foreground cursor-default px-4 py-2 select-none" title="You are already a host">

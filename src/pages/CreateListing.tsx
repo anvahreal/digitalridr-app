@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import {
   ChevronLeft, Camera, MapPin, Search,
   CheckCircle2, Plus, Minus, Home, Sparkles, X, Play, Video,
-  Check, ChevronsUpDown, DollarSign, Calendar, Shield, ArrowRight, Loader2
+  Check, ChevronsUpDown, DollarSign, Calendar, Shield, ArrowRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatNaira } from "@/lib/utils";
@@ -851,7 +851,7 @@ const CreateListing = () => {
             className="flex-1 rounded-2xl h-14 font-black shadow-xl transition-all active:scale-95 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {loading ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {isEditMode ? "Saving..." : "Publishing..."}</>
+              <><LoadingSpinner className="mr-2 h-4 w-4" /> {isEditMode ? "Saving..." : "Publishing..."}</>
             ) : (
               step === totalSteps ? (isEditMode ? "Save Changes" : "Finish & Launch") : "Next Step"
             )}

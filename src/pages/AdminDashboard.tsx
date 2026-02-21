@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { sendNotificationEmail } from "@/lib/email";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { formatNaira } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -55,6 +56,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -180,6 +182,17 @@ const AdminDashboard = () => {
             setPayouts(originalPayouts); // Revert on error
         } else {
             toast.success(`Payout marked as ${status}`);
+
+            // Send Email Notification
+            const recipient = hosts.find(h => h.id === originalPayouts.find(p => p.id === id)?.user_id);
+            if (recipient?.email) {
+                const subject = status === 'paid' ? '💰 Payout Processed' : '⚠️ Payout Update';
+                const html = status === 'paid'
+                    ? `<p>Hi ${recipient.full_name},</p><p>Great news! Your payout request has been processed and sent to your bank account.</p>`
+                    : `<p>Hi ${recipient.full_name},</p><p>There was an issue with your payout request. It has been marked as rejected. Please check your bank details.</p>`;
+
+                sendNotificationEmail(recipient.email, subject, html);
+            }
         }
     };
 
@@ -294,6 +307,18 @@ const AdminDashboard = () => {
             if (error) throw error;
 
             toast.success(`Verification ${action}d successfully`);
+
+            // Send Email Notification
+            const recipient = verifications.find(v => v.id === userId);
+            if (recipient?.email) {
+                const subject = action === 'approve' ? '🎉 Identity Verified!' : '⚠️ Verification Update';
+                const html = action === 'approve'
+                    ? `<p>Hi ${recipient.full_name},</p><p>Congratulations! Your identity has been successfully verified. You can now list properties and accept bookings.</p>`
+                    : `<p>Hi ${recipient.full_name},</p><p>Your identity verification was rejected. Reason: ${rejectionReason || 'Documents did not meet requirements'}.</p>`;
+
+                sendNotificationEmail(recipient.email, subject, html);
+            }
+
             fetchData();
         } catch (err: any) {
             console.error("Review Error:", err);
@@ -463,6 +488,7 @@ const AdminDashboard = () => {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
+                        <NotificationBell />
                         <ModeToggle />
                         <Button size="icon" variant="ghost" className="rounded-full">
                             <Users size={20} />

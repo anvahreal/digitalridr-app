@@ -16,6 +16,7 @@ import Checkout from "./pages/Checkout";
 import MessagingCenter from "./pages/MessagingCenter";
 import ScrollToTop from "./components/ScrollToTop";
 import AdminDashboard from "./pages/AdminDashboard";
+import TestEmail from "./pages/TestEmail";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import LearnMore from "./pages/LearnMore";
 import VerifyIdentity from "./pages/VerifyIdentity";
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/learn-more" element={<LearnMore />} />
+              <Route path="/test-email" element={<TestEmail />} />
 
               {/* Protected User Routes */}
               <Route path="/dashboard" element={
